@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Sparkles, X } from 'lucide-react';
+import { Loader2, Sparkles, X, ImagePlus, Upload } from 'lucide-react';
 
 const CATEGORIES = ['sublet', 'furniture', 'electronics', 'books', 'services', 'tickets', 'tutoring', 'other'] as const;
+
+type UploadedImage = { url: string; localPreview: string };
 
 export function ListingComposer() {
   const [form, setForm] = useState({
@@ -15,13 +17,65 @@ export function ListingComposer() {
     asking_price: '',
     location: '',
   });
-  const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [newImageUrl, setNewImageUrl] = useState('');
+  const [images, setImages] = useState<UploadedImage[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hint, setHint] = useState('');
+  const [dragOver, setDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  async function uploadFiles(files: File[]) {
+    if (images.length + files.length > 6) {
+      setUploadError('Max 6 images total');
+      return;
+    }
+    setUploadError(null);
+    setUploading(true);
+    try {
+      await Promise.all(
+        files.map(async (file) => {
+          const localPreview = URL.createObjectURL(file);
+          const fd = new FormData();
+          fd.append('file', file);
+          const res = await fetch('/api/upload', { method: 'POST', body: fd });
+          if (!res.ok) {
+            const { error } = await res.json().catch(() => ({ error: 'upload failed' }));
+            throw new Error(error);
+          }
+          const { url } = await res.json();
+          setImages((prev) => [...prev, { url, localPreview }]);
+        })
+      );
+    } catch (err: any) {
+      setUploadError(err.message ?? 'Upload failed');
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length) uploadFiles(files);
+    e.target.value = '';
+  }
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const files = Array.from(e.dataTransfer.files).filter((f) => f.type.startsWith('image/'));
+    if (files.length) uploadFiles(files);
+  }, [images]);
+
+  function removeImage(idx: number) {
+    setImages((prev) => {
+      URL.revokeObjectURL(prev[idx].localPreview);
+      return prev.filter((_, i) => i !== idx);
+    });
+  }
 
   async function aiDraft() {
     if (!hint.trim()) {
@@ -53,24 +107,6 @@ export function ListingComposer() {
     }
   }
 
-  function addImage() {
-    const u = newImageUrl.trim();
-    if (!u) return;
-    try {
-      new URL(u);
-    } catch {
-      setError('Image must be a full URL (https://…)');
-      return;
-    }
-    if (imageUrls.length >= 6) {
-      setError('Max 6 images');
-      return;
-    }
-    setError(null);
-    setImageUrls([...imageUrls, u]);
-    setNewImageUrl('');
-  }
-
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -91,7 +127,7 @@ export function ListingComposer() {
           description: form.description.trim(),
           asking_price_cents: Math.round(dollars * 100),
           location: form.location.trim() || undefined,
-          images: imageUrls,
+          images: images.map((img) => img.url),
         }),
       });
       if (!res.ok) {
@@ -108,6 +144,7 @@ export function ListingComposer() {
 
   return (
     <form onSubmit={submit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      {/* AI Draft */}
       <div className="rounded-lg border border-accent/30 bg-accent-soft/40 p-3">
         <label className="block text-xs font-medium text-accent">
           <Sparkles className="mr-1 inline-block h-3.5 w-3.5" /> AI Draft (describe your item in a sentence)
@@ -147,9 +184,7 @@ export function ListingComposer() {
             className="input"
           >
             {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
         </Field>
@@ -196,49 +231,80 @@ export function ListingComposer() {
         </Field>
       </div>
 
+      {/* Image Upload */}
       <div>
-        <label className="block text-sm font-medium text-ink">Images (URLs)</label>
-        <div className="mt-1 flex gap-2">
-          <input
-            value={newImageUrl}
-            onChange={(e) => setNewImageUrl(e.target.value)}
-            placeholder="https://i.imgur.com/example.jpg"
-            className="input flex-1"
-          />
-          <button
-            type="button"
-            onClick={addImage}
-            className="rounded-md border border-slate-200 px-3 py-1.5 text-sm hover:border-ink"
+        <label className="block text-sm font-medium text-ink">Photos (up to 6)</label>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
+          multiple
+          className="sr-only"
+          onChange={handleFileInput}
+        />
+
+        {/* Drop zone — only shown when < 6 images */}
+        {images.length < 6 && (
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDrop={handleDrop}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            className={`mt-1 flex cursor-pointer flex-col items-center justify-center gap-1.5 rounded-lg border-2 border-dashed py-5 text-sm transition ${
+              dragOver
+                ? 'border-ink bg-slate-50 text-ink'
+                : 'border-slate-300 text-ink-muted hover:border-ink/40 hover:text-ink'
+            }`}
           >
-            Add
-          </button>
-        </div>
-        {imageUrls.length > 0 && (
+            {uploading ? (
+              <><Loader2 className="h-5 w-5 animate-spin" /><span>Uploading…</span></>
+            ) : (
+              <><ImagePlus className="h-5 w-5" /><span>Click or drag &amp; drop photos</span><span className="text-xs text-ink-muted">JPEG · PNG · WebP · GIF · max 8 MB each</span></>
+            )}
+          </div>
+        )}
+
+        {/* Previews */}
+        {images.length > 0 && (
           <div className="mt-2 grid grid-cols-3 gap-2 sm:grid-cols-6">
-            {imageUrls.map((u, i) => (
-              <div key={u} className="relative">
-                <img src={u} alt="" className="aspect-square w-full rounded-md border border-slate-200 object-cover" />
+            {images.map((img, i) => (
+              <div key={img.url} className="relative">
+                <img
+                  src={img.localPreview}
+                  alt=""
+                  className="aspect-square w-full rounded-md border border-slate-200 object-cover"
+                />
                 <button
                   type="button"
-                  onClick={() => setImageUrls(imageUrls.filter((_, idx) => idx !== i))}
+                  onClick={() => removeImage(i)}
                   className="absolute -right-1 -top-1 inline-flex h-5 w-5 items-center justify-center rounded-full bg-white text-rose-600 shadow"
                 >
                   <X className="h-3 w-3" />
                 </button>
               </div>
             ))}
+            {images.length < 6 && (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="flex aspect-square items-center justify-center rounded-md border border-dashed border-slate-300 text-ink-muted hover:border-ink/40 hover:text-ink"
+              >
+                <Upload className="h-4 w-4" />
+              </button>
+            )}
           </div>
         )}
-        <p className="mt-1 text-[11px] text-ink-muted">
-          Paste direct image URLs (from Imgur, GitHub, etc). File upload needs Supabase Storage — see README.
-        </p>
+
+        {uploadError && (
+          <p className="mt-1 text-xs text-rose-600">{uploadError}</p>
+        )}
       </div>
 
       {error && <div className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
       <div className="flex items-center justify-end">
         <button
-          disabled={submitting}
+          disabled={submitting || uploading}
           className="inline-flex items-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-medium text-white transition hover:bg-ink/90 disabled:opacity-50"
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />} Publish listing
