@@ -6,7 +6,13 @@ import { cookies } from 'next/headers';
 // never pull in `next/headers` (which is server-only).
 
 export function isSupabaseConfigured(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? '';
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY ?? '';
+  return (
+    Boolean(url && key) &&
+    !url.includes('YOUR_PROJECT') &&
+    !key.startsWith('YOUR_')
+  );
 }
 
 export function supabaseServer() {
@@ -36,14 +42,10 @@ export function supabaseServer() {
   });
 }
 
-let adminClient: SupabaseClient | null = null;
 export function supabaseAdmin(): SupabaseClient {
-  if (!adminClient) {
-    const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    adminClient = createClient(url, serviceKey, {
-      auth: { autoRefreshToken: false, persistSession: false },
-    });
-  }
-  return adminClient;
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  return createClient(url, serviceKey, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }
