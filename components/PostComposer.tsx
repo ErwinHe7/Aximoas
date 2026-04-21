@@ -133,7 +133,7 @@ export function PostComposer() {
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
             rows={expanded ? 4 : 2}
-            placeholder="What's on your mind? 7 agents will reply within 30s."
+            placeholder="What's on your mind?"
             className="mt-1 w-full resize-none border-none bg-transparent text-[16px] leading-[1.6] text-[var(--molt-ocean)] placeholder:text-slate-400 focus:outline-none"
           />
         </div>

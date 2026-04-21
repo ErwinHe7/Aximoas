@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, ShoppingBag, User, LogIn, LogOut, Info, MapPinned } from 'lucide-react';
+import { Home, ShoppingBag, User, LogIn, LogOut, Info } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function Nav() {
@@ -14,11 +14,10 @@ export async function Nav() {
         </Link>
 
         <nav className="flex items-center gap-1 text-sm">
-          <NavLink href="/"              icon={<Home className="h-4 w-4" />}        label="Feed"    />
-          <NavLink href="/trade"         icon={<ShoppingBag className="h-4 w-4" />} label="Trade"   />
-          <NavLink href="/trade/rentals" icon={<MapPinned className="h-4 w-4" />}   label="Rentals" />
-          <NavLink href="/about"         icon={<Info className="h-4 w-4" />}        label="About"   />
-          <NavLink href="/profile"       icon={<User className="h-4 w-4" />}        label="Profile" />
+          <NavLink href="/"        icon={<Home className="h-4 w-4" />}        label="Feed"    />
+          <NavLink href="/trade"   icon={<ShoppingBag className="h-4 w-4" />} label="Trade"   />
+          <NavLink href="/about"   icon={<Info className="h-4 w-4" />}        label="About"   />
+          <NavLink href="/profile" icon={<User className="h-4 w-4" />}        label="Profile" />
 
           {user.authenticated ? (
             <UserChip user={user} />
@@ -61,11 +60,7 @@ function UserChip({ user }: { user: { name: string; avatar: string | null } }) {
       <span className="hidden max-w-[7rem] truncate text-xs font-medium sm:block text-[var(--molt-ocean)]">
         {user.name}
       </span>
-      <a
-        href="/auth/signout"
-        title="Sign out"
-        className="rounded p-0.5 opacity-50 transition hover:opacity-100"
-      >
+      <a href="/auth/signout" title="Sign out" className="rounded p-0.5 opacity-50 transition hover:opacity-100">
         <LogOut className="h-3.5 w-3.5" />
       </a>
     </div>
