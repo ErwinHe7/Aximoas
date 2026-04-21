@@ -64,6 +64,10 @@ html, body {
   50%       { transform: translateY(8px); }
 }
 
+/* Nav item hover — pure CSS, no JS event handlers */
+.nav-item { color: rgba(247,240,232,0.5); }
+.nav-item:hover { color: var(--molt-sand); }
+
 /* Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

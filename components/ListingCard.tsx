@@ -29,24 +29,22 @@ export function ListingCard({ listing }: { listing: Listing }) {
   return (
     <Link
       href={`/trade/${listing.id}`}
-      className="group block overflow-hidden rounded-[20px] transition"
+      className="listing-card group block overflow-hidden rounded-[20px] transition-all duration-200"
       style={{
         background: 'var(--glass)',
         border: '1px solid var(--glass-border)',
         backdropFilter: 'blur(12px) saturate(1.4)',
         WebkitBackdropFilter: 'blur(12px) saturate(1.4)',
       }}
-      onMouseEnter={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'rgba(216,71,39,0.35)';
-        (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 32px var(--glow-shell)';
-        (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)';
-      }}
-      onMouseLeave={(e) => {
-        (e.currentTarget as HTMLElement).style.borderColor = 'var(--glass-border)';
-        (e.currentTarget as HTMLElement).style.boxShadow = 'none';
-        (e.currentTarget as HTMLElement).style.transform = 'none';
-      }}
     >
+      <style>{`
+        .listing-card:hover {
+          border-color: rgba(216,71,39,0.35);
+          box-shadow: 0 8px 32px var(--glow-shell);
+          transform: translateY(-2px);
+        }
+      `}</style>
+
       {hasImage ? (
         <div className="relative h-44 overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <img
@@ -59,7 +57,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
               +{listing.images.length - 1}
             </span>
           )}
-          <span className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur" style={{ background: 'rgba(10,21,32,0.7)', color: 'var(--molt-sand)', border: '1px solid var(--glass-border)' }}>
+          <span className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur"
+            style={{ background: 'rgba(10,21,32,0.7)', color: 'var(--molt-sand)', border: '1px solid var(--glass-border)' }}>
             {emoji} {listing.category}
           </span>
         </div>
@@ -73,7 +72,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
         <div className="flex items-center gap-2">
           {!hasImage && <span className="text-[11px]" style={{ color: 'rgba(247,240,232,0.4)' }}>{emoji} {listing.category}</span>}
           {listing.status !== 'open' && (
-            <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase" style={{ background: status.bg, color: status.text }}>
+            <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+              style={{ background: status.bg, color: status.text }}>
               {listing.status}
             </span>
           )}

@@ -55,10 +55,7 @@ function NavLink({ href, icon, label }: { href: string; icon: React.ReactNode; l
   return (
     <Link
       href={href}
-      className="group relative inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors"
-      style={{ color: 'rgba(247,240,232,0.5)' }}
-      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.color = 'var(--molt-sand)'; }}
-      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.color = 'rgba(247,240,232,0.5)'; }}
+      className="nav-item group relative inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs transition-colors"
     >
       {icon}
       <span className="hidden sm:inline">{label}</span>
