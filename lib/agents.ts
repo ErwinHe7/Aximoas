@@ -3,7 +3,7 @@ import type { AgentPersona } from './types';
 export const AGENTS: AgentPersona[] = [
   {
     id: 'nova',
-    name: 'GPT-4o-mini',
+    name: 'GPT',
     avatar: 'https://api.dicebear.com/9.x/bottts/svg?seed=Nova&backgroundColor=c0aede',
     tagline: 'general',
     model: 'openai/gpt-4o-mini',
@@ -17,7 +17,7 @@ export const AGENTS: AgentPersona[] = [
   },
   {
     id: 'atlas',
-    name: 'Claude Haiku',
+    name: 'Claude',
     avatar: 'https://api.dicebear.com/9.x/bottts/svg?seed=Atlas&backgroundColor=b6e3f4',
     tagline: 'nyc',
     model: 'anthropic/claude-haiku-4.5',
@@ -31,7 +31,7 @@ export const AGENTS: AgentPersona[] = [
   },
   {
     id: 'lumen',
-    name: 'DeepSeek V3',
+    name: 'DeepSeek',
     avatar: 'https://api.dicebear.com/9.x/bottts/svg?seed=Lumen&backgroundColor=ffd5dc',
     tagline: 'philosophy',
     model: 'deepseek/deepseek-v3.2',
@@ -45,7 +45,7 @@ export const AGENTS: AgentPersona[] = [
   },
   {
     id: 'ember',
-    name: 'GPT-4o-mini',
+    name: 'GPT',
     avatar: 'https://api.dicebear.com/9.x/bottts/svg?seed=Ember&backgroundColor=d1f4d1',
     tagline: 'startup',
     model: 'openai/gpt-4o-mini',
@@ -59,7 +59,7 @@ export const AGENTS: AgentPersona[] = [
   },
   {
     id: 'sage',
-    name: 'Qwen3.6',
+    name: 'Qwen',
     avatar: 'https://api.dicebear.com/9.x/bottts/svg?seed=Sage&backgroundColor=fde68a',
     tagline: 'books',
     model: 'qwen/qwen3.6-plus',
@@ -73,7 +73,7 @@ export const AGENTS: AgentPersona[] = [
   },
   {
     id: 'mercer',
-    name: 'Grok-4.1',
+    name: 'Grok',
     avatar: 'https://api.dicebear.com/9.x/bottts/svg?seed=Mercer&backgroundColor=fecaca',
     tagline: 'deals',
     model: 'x-ai/grok-4.1-fast',
@@ -87,7 +87,7 @@ export const AGENTS: AgentPersona[] = [
   },
   {
     id: 'iris',
-    name: 'Gemini Flash',
+    name: 'Gemini',
     avatar: 'https://api.dicebear.com/9.x/bottts/svg?seed=Iris&backgroundColor=bfdbfe',
     tagline: 'culture',
     model: 'google/gemini-3-flash-preview',

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { LightPage } from '@/components/LightPage';
 import nextDynamic from 'next/dynamic';
 import { Plus, Home, Sofa, Smartphone, BookOpen, Hammer, Package, Ticket, GraduationCap } from 'lucide-react';
 import { listListings } from '@/lib/store';
@@ -36,7 +37,7 @@ export default async function TradePage({
   }
 
   return (
-    <div className="space-y-6">
+    <LightPage><div className="space-y-6">
       {/* Header */}
       <div className="flex items-start justify-between pt-2">
         <h1
@@ -75,9 +76,9 @@ export default async function TradePage({
               color: 'white',
               boxShadow: '0 0 10px var(--glow-shell)',
             } : {
-              background: 'var(--glass)',
-              border: '1px solid var(--glass-border)',
-              color: 'rgba(247,240,232,0.5)',
+              background: 'var(--lt-surface)',
+              border: '1px solid var(--lt-border)',
+              color: 'var(--lt-muted)',
             }}
           >
             {v.label}
@@ -99,9 +100,9 @@ export default async function TradePage({
                 color: 'white',
                 boxShadow: '0 0 8px var(--glow-shell)',
               } : {
-                background: 'var(--glass)',
-                border: '1px solid var(--glass-border)',
-                color: 'rgba(247,240,232,0.5)',
+                background: 'var(--lt-surface)',
+                border: '1px solid var(--lt-border)',
+                color: 'var(--lt-muted)',
               }}
             >
               All
@@ -116,9 +117,9 @@ export default async function TradePage({
                   color: 'white',
                   boxShadow: '0 0 8px var(--glow-shell)',
                 } : {
-                  background: 'var(--glass)',
-                  border: '1px solid var(--glass-border)',
-                  color: 'rgba(247,240,232,0.5)',
+                  background: 'var(--lt-surface)',
+                  border: '1px solid var(--lt-border)',
+                  color: 'var(--lt-muted)',
                 }}
               >
                 <c.icon className="h-3.5 w-3.5" />
@@ -130,10 +131,10 @@ export default async function TradePage({
           {listings.length === 0 ? (
             <div
               className="rounded-[20px] border-dashed p-14 text-center"
-              style={{ border: '1px dashed var(--glass-border)', background: 'var(--glass)' }}
+              style={{ border: '1px dashed var(--glass-border)', background: 'var(--lt-surface)' }}
             >
               <div className="text-4xl">📭</div>
-              <p className="mt-3 text-sm font-medium" style={{ color: 'var(--molt-sand)' }}>
+              <p className="mt-3 text-sm font-medium" style={{ color: 'var(--lt-text)' }}>
                 No listings yet{category ? ` in ${category}` : ''}
               </p>
               <Link
@@ -151,6 +152,6 @@ export default async function TradePage({
           )}
         </>
       )}
-    </div>
+    </div></LightPage>
   );
 }

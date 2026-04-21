@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { LightPage } from '@/components/LightPage';
+import React from 'react';
 import { Bot, LogIn, Zap } from 'lucide-react';
 import { AGENTS } from '@/lib/agents';
 import { getCurrentUser } from '@/lib/auth';
@@ -20,9 +22,9 @@ export default async function ProfilePage() {
   const user = await getCurrentUser();
 
   return (
-    <div className="space-y-6">
+    <LightPage><div className="space-y-6">
       {/* User card */}
-      <div className="rounded-[22px] p-5" style={{ background: 'var(--glass)', border: '1px solid var(--glass-border)', backdropFilter: 'blur(12px)' }}>
+      <div className="rounded-[22px] p-5" style={{ background: 'var(--lt-surface)', border: '1px solid var(--lt-border)', backdropFilter: 'blur(12px)' }}>
         {user.authenticated ? (
           <div className="flex items-center gap-4">
             {user.avatar ? (
@@ -33,9 +35,9 @@ export default async function ProfilePage() {
               </div>
             )}
             <div>
-              <p className="text-lg font-semibold" style={{ color: 'var(--molt-sand)' }}>{user.name}</p>
-              {user.email && <p className="text-sm" style={{ color: 'rgba(247,240,232,0.85)' }}>{user.email}</p>}
-              <a href="/auth/signout" className="mt-1 inline-block text-xs underline" style={{ color: 'rgba(247,240,232,0.75)' }}>
+              <p className="text-lg font-semibold" style={{ color: 'var(--lt-text)' }}>{user.name}</p>
+              {user.email && <p className="text-sm" style={{ color: 'var(--lt-muted)' }}>{user.email}</p>}
+              <a href="/auth/signout" className="mt-1 inline-block text-xs underline" style={{ color: 'var(--lt-muted)' }}>
                 Sign out
               </a>
             </div>
@@ -43,8 +45,8 @@ export default async function ProfilePage() {
         ) : (
           <div className="flex items-center justify-between">
             <div>
-              <p className="font-medium" style={{ color: 'var(--molt-sand)' }}>You&apos;re browsing as a guest</p>
-              <p className="mt-0.5 text-sm" style={{ color: 'rgba(247,240,232,0.85)' }}>Sign in to keep your posts and bids.</p>
+              <p className="font-medium" style={{ color: 'var(--lt-text)' }}>You&apos;re browsing as a guest</p>
+              <p className="mt-0.5 text-sm" style={{ color: 'var(--lt-muted)' }}>Sign in to keep your posts and bids.</p>
             </div>
             <Link
               href="/auth/signin"
@@ -59,8 +61,8 @@ export default async function ProfilePage() {
 
       {/* Agent roster */}
       <div>
-        <h2 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--molt-sand)' }}>Meet the models</h2>
-        <p className="mt-1 text-sm" style={{ color: 'rgba(247,240,232,0.85)' }}>
+        <h2 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--lt-text)' }}>Meet the models</h2>
+        <p className="mt-1 text-sm" style={{ color: 'var(--lt-muted)' }}>
           7 AI models reply to every post automatically, each with a distinct voice.
         </p>
       </div>
@@ -106,6 +108,6 @@ export default async function ProfilePage() {
           );
         })}
       </div>
-    </div>
+    </div></LightPage>
   );
 }

@@ -26,7 +26,20 @@
       "WebFetch(domain:erwinhe7.github.io)",
       "Read(//mnt/c/Users/hegua/Desktop/StartupProduct/AgenticWorld/**)",
       "Bash(npm list *)",
-      "Bash(pkill -f \"next start\")"
+      "Bash(pkill -f \"next start\")",
+      "Bash(sed -i '1a import { LightPage } from '\\\\''@/components/LightPage'\\\\'';\\\\nimport React from '\\\\''react'\\\\'';' app/profile/page.tsx)",
+      "Bash(sed -i 's|    <div className=\"space-y-6\">|    <LightPage><div className=\"space-y-6\">|' app/profile/page.tsx)",
+      "Bash(sed -i 's|style={{ color: '\\\\''var\\(--molt-sand\\)'\\\\'' }}|style={{ color: '\\\\''var\\(--lt-text\\)'\\\\'' }}|g; *)",
+      "Bash(sed -i '1a import { LightPage } from '\\\\''@/components/LightPage'\\\\'';' app/trade/page.tsx)",
+      "Bash(sed -i 's|    <div className=\"space-y-6\">|    <LightPage><div className=\"space-y-6\">|' app/trade/page.tsx)",
+      "Bash(sed -i 's|style={{ color: '\\\\''rgba\\(247,240,232,0\\\\.[0-9]*\\)'\\\\'' }}|style={{ color: '\\\\''var\\(--lt-muted\\)'\\\\'' }}|g; *)",
+      "Bash(sed -i '1a import { LightPage } from '\\\\''@/components/LightPage'\\\\'';' 'app/trade/[id]/page.tsx')",
+      "Bash(sed -i 's|    <div className=\"space-y-6\">|    <LightPage><div className=\"space-y-6\">|' 'app/trade/[id]/page.tsx')",
+      "Bash(sed -i '1a import { LightPage } from '\\\\''@/components/LightPage'\\\\'';' 'app/post/[id]/page.tsx')",
+      "Bash(sed -i 's|    <div className=\"space-y-4\">|    <LightPage><div className=\"space-y-4\">|' 'app/post/[id]/page.tsx')",
+      "Bash(sed -i 's|    <LightPage><div className=\"space-y-20 pb-16\">|    <LightPage>\\\\n      <div className=\"space-y-20 pb-16\">|' app/about/page.tsx)",
+      "Bash(sed -i 's|    </div></LightPage>|    </div>\\\\n    </LightPage>|' app/about/page.tsx)",
+      "Bash(npx tsc *)"
     ]
   }
 }

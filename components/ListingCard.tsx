@@ -31,8 +31,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
       href={`/trade/${listing.id}`}
       className="listing-card group block overflow-hidden rounded-[20px] transition-all duration-200"
       style={{
-        background: 'var(--glass)',
-        border: '1px solid var(--glass-border)',
+        background: 'var(--lt-surface)',
+        border: '1px solid var(--lt-border)',
         backdropFilter: 'blur(12px) saturate(1.4)',
         WebkitBackdropFilter: 'blur(12px) saturate(1.4)',
       }}
@@ -58,7 +58,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
             </span>
           )}
           <span className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur"
-            style={{ background: 'rgba(10,21,32,0.7)', color: 'var(--molt-sand)', border: '1px solid var(--glass-border)' }}>
+            style={{ background: 'rgba(10,21,32,0.7)', color: 'var(--lt-text)', border: '1px solid var(--lt-border)' }}>
             {emoji} {listing.category}
           </span>
         </div>
@@ -70,36 +70,36 @@ export function ListingCard({ listing }: { listing: Listing }) {
 
       <div className="p-4">
         <div className="flex items-center gap-2">
-          {!hasImage && <span className="text-[11px]" style={{ color: 'rgba(247,240,232,0.4)' }}>{emoji} {listing.category}</span>}
+          {!hasImage && <span className="text-[11px]" style={{ color: 'var(--lt-muted)' }}>{emoji} {listing.category}</span>}
           {listing.status !== 'open' && (
             <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase"
               style={{ background: status.bg, color: status.text }}>
               {listing.status}
             </span>
           )}
-          <span className="ml-auto text-[11px]" style={{ color: 'rgba(247,240,232,0.3)' }}>{timeAgo(listing.created_at)}</span>
+          <span className="ml-auto text-[11px]" style={{ color: 'var(--lt-muted)' }}>{timeAgo(listing.created_at)}</span>
         </div>
 
-        <h3 className="mt-2 line-clamp-2 text-[15px] font-semibold leading-snug" style={{ color: 'var(--molt-sand)' }}>
+        <h3 className="mt-2 line-clamp-2 text-[15px] font-semibold leading-snug" style={{ color: 'var(--lt-text)' }}>
           {listing.title}
         </h3>
-        <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: 'rgba(247,240,232,0.45)' }}>
+        <p className="mt-1 line-clamp-2 text-xs leading-relaxed" style={{ color: 'var(--lt-muted)' }}>
           {listing.description}
         </p>
 
-        <div className="mt-3 flex items-end justify-between border-t pt-3" style={{ borderColor: 'var(--glass-border)' }}>
+        <div className="mt-3 flex items-end justify-between border-t pt-3" style={{ borderColor: 'var(--lt-border)' }}>
           <div>
             <div className="text-xl font-bold font-mono" style={{ color: 'var(--molt-shell)' }}>
               {formatCents(listing.asking_price_cents, listing.currency)}
             </div>
-            <div className="text-[11px]" style={{ color: 'rgba(247,240,232,0.35)' }}>
+            <div className="text-[11px]" style={{ color: 'var(--lt-muted)' }}>
               {listing.bid_count > 0
                 ? `${listing.bid_count} bid${listing.bid_count > 1 ? 's' : ''} · top ${formatCents(listing.top_bid_cents ?? 0, listing.currency)}`
                 : 'No bids yet'}
             </div>
           </div>
           {listing.location && (
-            <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: 'rgba(247,240,232,0.35)' }}>
+            <span className="inline-flex items-center gap-1 text-[11px]" style={{ color: 'var(--lt-muted)' }}>
               <MapPin className="h-3 w-3" />{listing.location}
             </span>
           )}

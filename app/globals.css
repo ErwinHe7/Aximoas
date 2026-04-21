@@ -5,6 +5,7 @@
 :root {
   color-scheme: dark;
 
+  /* Brand palette */
   --bg-deep:      #0A1520;
   --bg-surface:   #0F1E2D;
   --molt-ocean:   #0B4F6C;
@@ -12,15 +13,26 @@
   --molt-coral:   #F9B5A4;
   --molt-sand:    #F7F0E8;
   --molt-kelp:    #4A7C59;
+
+  /* Dark-mode glass (used by Home / HeroSection) */
   --glass:        rgba(255,255,255,0.04);
   --glass-border: rgba(255,255,255,0.08);
   --glow-shell:   rgba(216,71,39,0.35);
   --glow-ocean:   rgba(11,79,108,0.40);
 
+  /* Light-mode tokens (used by sub-pages: Trade/Profile/About/Post) */
+  --lt-bg:        #F7F0E8;      /* warm gold background */
+  --lt-surface:   #FFFFFF;      /* card surface */
+  --lt-border:    rgba(26,26,26,0.1);
+  --lt-text:      #1A1A1A;      /* primary text — almost black */
+  --lt-muted:     #4A4039;      /* secondary text — warm dark */
+  --lt-subtle:    #7A6E65;      /* tertiary — still readable */
+
   --font-fraunces: 'Fraunces', Georgia, serif;
   --font-inter: 'Inter', system-ui, sans-serif;
 }
 
+/* ── Global dark base (Home / Hero) ── */
 html, body {
   height: 100%;
   background: var(--bg-deep);
@@ -30,25 +42,52 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* ── Light-mode sub-pages wrapper ── */
+.page-light {
+  background: var(--lt-bg);
+  color: var(--lt-text);
+  min-height: 100vh;
+  /* negative margins to escape max-width container padding */
+  margin: -1.5rem -1rem -6rem;
+  padding: 1.5rem 1rem 6rem;
+  /* 3-D depth hint via subtle inner shadow */
+  box-shadow: inset 0 0 120px rgba(216,71,39,0.04),
+              inset 0 0 40px rgba(11,79,108,0.03);
+}
+
+.page-light h1,
+.page-light h2,
+.page-light h3,
+.page-light h4 {
+  color: var(--lt-text);
+}
+
+.page-light p,
+.page-light li,
+.page-light span,
+.page-light label {
+  color: var(--lt-text);
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 99px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.15); }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.25); }
 
 .font-fraunces { font-family: var(--font-fraunces); }
 
-/* MapLibre tweaks */
+/* MapLibre */
 .maplibregl-ctrl-attrib { font-size: 10px; }
 
-/* Realtime new-post slide-in */
+/* Feed slide-in */
 @keyframes slideIn {
   from { opacity: 0; transform: translateY(-12px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 .animate-slide-in { animation: slideIn 0.35s ease-out; }
 
-/* Background mesh animations */
+/* Background mesh drift (Home) */
 @keyframes drift {
   0%, 100% { transform: translate(0, 0) scale(1); }
   33%       { transform: translate(40px, -30px) scale(1.05); }
@@ -64,11 +103,23 @@ html, body {
   50%       { transform: translateY(8px); }
 }
 
-/* Nav item hover — pure CSS, no JS event handlers */
+/* Particle canvas (light pages) */
+@keyframes particle-drift {
+  0%   { transform: translateY(0) translateX(0); opacity: 0; }
+  10%  { opacity: 0.6; }
+  90%  { opacity: 0.4; }
+  100% { transform: translateY(-120px) translateX(30px); opacity: 0; }
+}
+
+/* Nav hover underline */
 .nav-item { color: rgba(247,240,232,0.5); }
 .nav-item:hover { color: var(--molt-sand); }
+/* Nav items inside light pages */
+.page-light .nav-item,
+header.nav-light .nav-item { color: var(--lt-muted); }
+.page-light .nav-item:hover,
+header.nav-light .nav-item:hover { color: var(--molt-shell); }
 
-/* Respect prefers-reduced-motion */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
