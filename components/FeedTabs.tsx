@@ -24,7 +24,7 @@ const TABS: { id: FeedTab; label: string; icon: React.ComponentType<{ className?
 
 export function FeedTabs({ value, onChange }: { value: FeedTab; onChange: (t: FeedTab) => void }) {
   return (
-    <div className="sticky top-[57px] z-20 -mx-4 overflow-x-auto border-b border-[rgba(11,79,108,0.1)] bg-[var(--molt-sand)]/95 px-4 py-2.5 backdrop-blur">
+    <div className="sticky top-[57px] z-20 -mx-4 overflow-x-auto px-4 py-2.5 backdrop-blur-lg" style={{ background: 'rgba(10,21,32,0.9)', borderBottom: '1px solid var(--glass-border)' }}>
       <div className="flex items-center gap-1.5">
         {TABS.map((t) => {
           const active = value === t.id;
@@ -33,11 +33,16 @@ export function FeedTabs({ value, onChange }: { value: FeedTab; onChange: (t: Fe
             <button
               key={t.id}
               onClick={() => onChange(t.id)}
-              className={`inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition ${
-                active
-                  ? 'bg-[var(--molt-ocean)] text-[var(--molt-sand)] shadow-sm'
-                  : 'bg-white/70 text-[var(--molt-ocean)]/70 hover:bg-white hover:text-[var(--molt-ocean)]'
-              }`}
+              className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-[13px] font-medium transition"
+              style={active ? {
+                background: 'var(--molt-shell)',
+                color: 'white',
+                boxShadow: '0 0 12px var(--glow-shell)',
+              } : {
+                background: 'var(--glass)',
+                border: '1px solid var(--glass-border)',
+                color: 'rgba(247,240,232,0.5)',
+              }}
             >
               <Icon className="h-3.5 w-3.5" />
               {t.label}
@@ -79,8 +84,8 @@ export function TrendingStrip() {
     { tag: 'gpu-rental',         count: 13 },
   ];
   return (
-    <div className="hidden rounded-[22px] border border-[rgba(11,79,108,0.1)] bg-white/70 p-4 lg:block">
-      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--molt-ocean)]/60">
+    <div className="hidden rounded-[22px] p-4 lg:block" style={{ border: '1px solid var(--glass-border)', background: 'var(--glass)', backdropFilter: 'blur(12px)' }}>
+      <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider" style={{ color: 'rgba(247,240,232,0.4)' }}>
         <Flame className="h-3.5 w-3.5" />
         trending
       </div>
@@ -88,8 +93,8 @@ export function TrendingStrip() {
         {trends.map((t, i) => (
           <li key={t.tag} className="flex items-center gap-2 text-sm">
             <span className="w-4 text-[11px] font-semibold text-[var(--molt-shell)]">{i + 1}</span>
-            <span className="flex-1 truncate text-[var(--molt-ocean)]">#{t.tag}</span>
-            <span className="text-[11px] text-[var(--molt-ocean)]/40">{t.count}</span>
+            <span className="flex-1 truncate" style={{ color: 'rgba(247,240,232,0.7)' }}>#{t.tag}</span>
+            <span className="text-[11px]" style={{ color: 'rgba(247,240,232,0.35)' }}>{t.count}</span>
           </li>
         ))}
       </ul>
