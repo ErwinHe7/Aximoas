@@ -10,14 +10,14 @@ const RentalsApp = nextDynamic(() => import('@/components/rentals/RentalsApp'), 
 export const dynamic = 'force-dynamic';
 
 const CATEGORIES = [
-  { id: 'sublet',      label: 'Sublets',     icon: Home,          color: 'bg-blue-50 text-blue-700 border-blue-200' },
-  { id: 'furniture',   label: 'Furniture',   icon: Sofa,          color: 'bg-amber-50 text-amber-700 border-amber-200' },
-  { id: 'electronics', label: 'Electronics', icon: Smartphone,    color: 'bg-violet-50 text-violet-700 border-violet-200' },
-  { id: 'books',       label: 'Books',       icon: BookOpen,      color: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
-  { id: 'tickets',     label: 'Tickets',     icon: Ticket,        color: 'bg-rose-50 text-rose-700 border-rose-200' },
-  { id: 'tutoring',    label: 'Tutoring',    icon: GraduationCap, color: 'bg-teal-50 text-teal-700 border-teal-200' },
-  { id: 'services',    label: 'Services',    icon: Hammer,        color: 'bg-pink-50 text-pink-700 border-pink-200' },
-  { id: 'other',       label: 'Other',       icon: Package,       color: 'bg-slate-100 text-slate-700 border-slate-200' },
+  { id: 'sublet',      label: 'Sublets',     icon: Home },
+  { id: 'furniture',   label: 'Furniture',   icon: Sofa },
+  { id: 'electronics', label: 'Electronics', icon: Smartphone },
+  { id: 'books',       label: 'Books',       icon: BookOpen },
+  { id: 'tickets',     label: 'Tickets',     icon: Ticket },
+  { id: 'tutoring',    label: 'Tutoring',    icon: GraduationCap },
+  { id: 'services',    label: 'Services',    icon: Hammer },
+  { id: 'other',       label: 'Other',       icon: Package },
 ] as const;
 
 export default async function TradePage({
@@ -32,19 +32,29 @@ export default async function TradePage({
   try {
     listings = await listListings({ category });
   } catch {
-    // supabase not configured
+    // demo mode
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <h1 className="font-fraunces text-5xl font-black uppercase tracking-tight text-[var(--molt-ocean)]">
-          TRADE
+      <div className="flex items-start justify-between pt-2">
+        <h1
+          className="font-fraunces font-black italic leading-none tracking-tight"
+          style={{
+            fontSize: 'clamp(3.5rem, 10vw, 7rem)',
+            background: 'linear-gradient(135deg, var(--molt-shell) 0%, var(--molt-coral) 50%, var(--molt-sand) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+          }}
+        >
+          trade.
         </h1>
         <Link
           href="/trade/new"
-          className="inline-flex items-center gap-1.5 rounded-full bg-[var(--molt-shell)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:opacity-90"
+          style={{ background: 'var(--molt-shell)' }}
         >
           <Plus className="h-4 w-4" /> Post
         </Link>
@@ -52,31 +62,47 @@ export default async function TradePage({
 
       {/* View toggle */}
       <div className="flex gap-2">
-        <Link
-          href="/trade?view=market"
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${view === 'market' ? 'bg-[var(--molt-ocean)] text-white' : 'bg-white/70 text-[var(--molt-ocean)]/70 hover:bg-white'}`}
-        >
-          Marketplace
-        </Link>
-        <Link
-          href="/trade?view=rentals"
-          className={`rounded-full px-4 py-1.5 text-sm font-medium transition ${view === 'rentals' ? 'bg-[var(--molt-ocean)] text-white' : 'bg-white/70 text-[var(--molt-ocean)]/70 hover:bg-white'}`}
-        >
-          🗺 Rental Map
-        </Link>
+        {[
+          { href: '/trade?view=market', label: 'Marketplace', id: 'market' },
+          { href: '/trade?view=rentals', label: '🗺 Rental Map', id: 'rentals' },
+        ].map((v) => (
+          <Link
+            key={v.id}
+            href={v.href}
+            className="rounded-full px-4 py-1.5 text-sm font-medium transition"
+            style={view === v.id ? {
+              background: 'var(--molt-shell)',
+              color: 'white',
+              boxShadow: '0 0 10px var(--glow-shell)',
+            } : {
+              background: 'var(--glass)',
+              border: '1px solid var(--glass-border)',
+              color: 'rgba(247,240,232,0.5)',
+            }}
+          >
+            {v.label}
+          </Link>
+        ))}
       </div>
 
       {view === 'rentals' ? (
         <RentalsApp />
       ) : (
         <>
-          {/* Category filter */}
+          {/* Category pills */}
           <div className="flex flex-wrap gap-2">
             <Link
               href="/trade"
-              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                !category ? 'border-ink bg-ink text-white' : 'border-slate-200 bg-white text-ink-muted hover:border-ink/30 hover:text-ink'
-              }`}
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition"
+              style={!category ? {
+                background: 'var(--molt-shell)',
+                color: 'white',
+                boxShadow: '0 0 8px var(--glow-shell)',
+              } : {
+                background: 'var(--glass)',
+                border: '1px solid var(--glass-border)',
+                color: 'rgba(247,240,232,0.5)',
+              }}
             >
               All
             </Link>
@@ -84,9 +110,16 @@ export default async function TradePage({
               <Link
                 key={c.id}
                 href={`/trade?category=${c.id}`}
-                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
-                  category === c.id ? `border-transparent ${c.color}` : 'border-slate-200 bg-white text-ink-muted hover:border-ink/30 hover:text-ink'
-                }`}
+                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition"
+                style={category === c.id ? {
+                  background: 'var(--molt-shell)',
+                  color: 'white',
+                  boxShadow: '0 0 8px var(--glow-shell)',
+                } : {
+                  background: 'var(--glass)',
+                  border: '1px solid var(--glass-border)',
+                  color: 'rgba(247,240,232,0.5)',
+                }}
               >
                 <c.icon className="h-3.5 w-3.5" />
                 {c.label}
@@ -94,23 +127,26 @@ export default async function TradePage({
             ))}
           </div>
 
-          {/* Listings grid */}
           {listings.length === 0 ? (
-            <div className="rounded-[20px] border border-dashed border-slate-300 bg-white/60 p-14 text-center">
+            <div
+              className="rounded-[20px] border-dashed p-14 text-center"
+              style={{ border: '1px dashed var(--glass-border)', background: 'var(--glass)' }}
+            >
               <div className="text-4xl">📭</div>
-              <p className="mt-3 text-sm font-medium text-ink">No listings yet{category ? ` in ${category}` : ''}</p>
+              <p className="mt-3 text-sm font-medium" style={{ color: 'var(--molt-sand)' }}>
+                No listings yet{category ? ` in ${category}` : ''}
+              </p>
               <Link
                 href="/trade/new"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-[var(--molt-shell)] px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                className="mt-4 inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+                style={{ background: 'var(--molt-shell)' }}
               >
                 <Plus className="h-4 w-4" /> Post a listing
               </Link>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {listings.map((l) => (
-                <ListingCard key={l.id} listing={l} />
-              ))}
+              {listings.map((l) => <ListingCard key={l.id} listing={l} />)}
             </div>
           )}
         </>
