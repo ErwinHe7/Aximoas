@@ -8,8 +8,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
-  const posts = await listPosts();
-  return NextResponse.json({ posts });
+  try {
+    const posts = await listPosts();
+    return NextResponse.json({ posts });
+  } catch (err: any) {
+    console.error('[GET /api/posts]', err?.message);
+    return NextResponse.json({ posts: [], error: err?.message ?? 'db error' }, { status: 500 });
+  }
 }
 
 const PostInput = z.object({

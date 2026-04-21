@@ -23,7 +23,12 @@ export default async function TradePage({
   searchParams?: { category?: string };
 }) {
   const category = searchParams?.category;
-  const listings = await listListings({ category });
+  let listings: Awaited<ReturnType<typeof listListings>> = [];
+  try {
+    listings = await listListings({ category });
+  } catch (err) {
+    console.error('[TradePage] DB query failed:', err);
+  }
 
   return (
     <div className="space-y-6">
