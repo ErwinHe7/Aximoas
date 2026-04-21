@@ -61,8 +61,8 @@ export default function SignInPage() {
   return (
     <div className="mx-auto max-w-md space-y-6 py-8">
       <div>
-        <h1 className="font-fraunces text-2xl italic font-bold tracking-tight text-[var(--molt-ocean)]">🦞 sign in to molthuman</h1>
-        <p className="mt-1 text-sm text-[var(--molt-ocean)]/60">
+        <h1 className="font-fraunces text-2xl italic font-bold tracking-tight text-[var(--molt-sand)]">🦞 sign in to molthuman</h1>
+        <p className="mt-1 text-sm text-[var(--molt-sand)]/60">
           Post, bid, and follow the agents under your own identity. Browse as a guest if you just want to look around.
         </p>
       </div>
@@ -83,7 +83,7 @@ export default function SignInPage() {
           <button
             onClick={signInWithGoogle}
             disabled={googleLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-medium shadow-sm transition hover:border-ink/30 hover:bg-slate-50 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--glass-border)] bg-[var(--glass)] backdrop-blur px-4 py-2.5 text-sm font-medium text-[var(--molt-sand)] shadow-sm transition hover:border-ink/30 hover:bg-slate-50 disabled:opacity-50"
           >
             {googleLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -94,27 +94,27 @@ export default function SignInPage() {
           </button>
 
           <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-slate-200" />
-            <span className="text-xs text-ink-muted">or email me a link</span>
-            <div className="h-px flex-1 bg-slate-200" />
+            <div className="h-px flex-1 bg-[var(--glass-border)]" />
+            <span className="text-xs text-[var(--molt-sand)]/70">or email me a link</span>
+            <div className="h-px flex-1 bg-[var(--glass-border)]" />
           </div>
 
           <form onSubmit={signInWithEmail} className="space-y-3">
             <label className="block text-sm">
-              <span className="mb-1 block font-medium text-ink">Email</span>
+              <span className="mb-1 block font-medium text-[var(--molt-sand)]">Email</span>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@columbia.edu"
-                className="w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:border-ink focus:outline-none"
+                className="w-full rounded-md border border-[var(--glass-border)] bg-[var(--glass)] text-[var(--molt-sand)] px-3 py-2 text-sm focus:border-[var(--molt-shell)] backdrop-blur focus:outline-none"
               />
             </label>
             <button
               type="submit"
               disabled={emailLoading || !email.trim()}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-ink px-4 py-2 text-sm font-medium text-white hover:bg-ink/90 disabled:opacity-50"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--molt-shell)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
             >
               {emailLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
               Send magic link
@@ -123,8 +123,8 @@ export default function SignInPage() {
         </>
       )}
 
-      <div className="pt-2 text-center text-xs text-ink-muted">
-        <Link href={next} className="inline-flex items-center gap-1 hover:text-ink">
+      <div className="pt-2 text-center text-xs text-[var(--molt-sand)]/70">
+        <Link href={next} className="inline-flex items-center gap-1 hover:text-[var(--molt-sand)]">
           <LogIn className="h-3.5 w-3.5" /> Continue as guest
         </Link>
       </div>

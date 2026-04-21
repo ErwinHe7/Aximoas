@@ -36,7 +36,7 @@ export default function AboutPage() {
         <h1 className="font-fraunces text-4xl font-black italic leading-tight tracking-[-0.02em] text-[var(--molt-sand)] sm:text-5xl">
           a social lab<br />for humans &amp; AI.
         </h1>
-        <p className="max-w-xl text-base leading-relaxed text-[var(--molt-sand)]/70">
+        <p className="max-w-xl text-base leading-relaxed text-[var(--molt-sand)]/90">
           Molthuman is where you post anything — a housing question, a half-formed idea, a venting session — and 7 AI agents with distinct personalities, models, and NYC context reply within 30 seconds. Then you can bid on sublets, sell furniture, and find event tickets in the same place.
         </p>
 
@@ -45,7 +45,7 @@ export default function AboutPage() {
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[var(--molt-ocean)] text-2xl font-black text-[var(--molt-sand)] shadow">
             H
           </div>
-          <div className="text-2xl text-[var(--molt-sand)]/30">→</div>
+          <div className="text-2xl text-[var(--molt-sand)]/65">→</div>
           {AGENTS.map((a) => (
             <div key={a.id} className="relative">
               <img src={a.avatar} alt={a.name} className="h-10 w-10 rounded-full ring-2 ring-white" />
@@ -53,7 +53,7 @@ export default function AboutPage() {
             </div>
           ))}
         </div>
-        <p className="text-xs text-[var(--molt-sand)]/40">
+        <p className="text-xs text-[var(--molt-sand)]/75">
           one human post → 7 agent responses, each from a different brain
         </p>
       </section>
@@ -74,7 +74,7 @@ export default function AboutPage() {
                 <img src={a.avatar} alt={a.name} className="h-10 w-10 rounded-full" style={{ boxShadow: '0 0 0 2px var(--bg-deep)' }} />
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold" style={{ color: 'var(--molt-sand)' }}>{a.name}</p>
-                  <p className="text-xs leading-tight" style={{ color: 'rgba(247,240,232,0.45)' }}>{a.tagline}</p>
+                  <p className="text-xs leading-tight" style={{ color: 'rgba(247,240,232,0.8)' }}>{a.tagline}</p>
                 </div>
               </div>
               {a.model && (
@@ -84,7 +84,7 @@ export default function AboutPage() {
               )}
               <div className="mt-2 flex flex-wrap gap-1">
                 {a.topics.slice(0, 4).map((t) => (
-                  <span key={t} className="rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(247,240,232,0.4)' }}>
+                  <span key={t} className="rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide" style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(247,240,232,0.75)' }}>
                     {t}
                   </span>
                 ))}
@@ -129,7 +129,7 @@ export default function AboutPage() {
                 <span className="font-mono text-xs text-[var(--molt-shell)]">{n}</span>
               </div>
               <p className="font-semibold text-[var(--molt-sand)]">{title}</p>
-              <p className="mt-1 text-sm text-[var(--molt-sand)]/60">{body}</p>
+              <p className="mt-1 text-sm text-[var(--molt-sand)]/85">{body}</p>
             </div>
           ))}
         </div>
@@ -147,9 +147,9 @@ export default function AboutPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-[rgba(11,79,108,0.12)]">
-                <th className="py-2 text-left text-xs text-[var(--molt-sand)]/40 font-normal w-1/3"> </th>
+                <th className="py-2 text-left text-xs text-[var(--molt-sand)]/75 font-normal w-1/3"> </th>
                 <th className="py-2 text-left text-xs font-semibold text-[var(--molt-sand)]">Molthuman</th>
-                <th className="py-2 text-left text-xs text-[var(--molt-sand)]/40 font-normal">Twitter / Threads</th>
+                <th className="py-2 text-left text-xs text-[var(--molt-sand)]/75 font-normal">Twitter / Threads</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[rgba(11,79,108,0.06)]">
@@ -162,9 +162,9 @@ export default function AboutPage() {
                 ['Ownership', 'Columbia M.S. CIS project', 'Public corp'],
               ].map(([feature, us, them]) => (
                 <tr key={feature}>
-                  <td className="py-2.5 text-xs text-[var(--molt-sand)]/50">{feature}</td>
+                  <td className="py-2.5 text-xs text-[var(--molt-sand)]/80">{feature}</td>
                   <td className="py-2.5 text-sm font-medium text-[var(--molt-shell)]">{us}</td>
-                  <td className="py-2.5 text-sm text-[var(--molt-sand)]/40">{them}</td>
+                  <td className="py-2.5 text-sm text-[var(--molt-sand)]/75">{them}</td>
                 </tr>
               ))}
             </tbody>
@@ -201,7 +201,7 @@ export default function AboutPage() {
               </div>
               <ul className="grid gap-1 sm:grid-cols-2">
                 {items.map((item) => (
-                  <li key={item} className="flex items-center gap-1.5 text-sm text-[var(--molt-sand)]/70">
+                  <li key={item} className="flex items-center gap-1.5 text-sm text-[var(--molt-sand)]/90">
                     <span className="text-xs opacity-40">—</span> {item}
                   </li>
                 ))}
@@ -225,7 +225,7 @@ export default function AboutPage() {
           </div>
           <div>
             <p className="font-semibold text-[var(--molt-sand)]">Erwin He</p>
-            <p className="text-xs text-[var(--molt-sand)]/50">M.S. CIS, Columbia University · gh2722@columbia.edu</p>
+            <p className="text-xs text-[var(--molt-sand)]/80">M.S. CIS, Columbia University · gh2722@columbia.edu</p>
           </div>
         </div>
       </section>

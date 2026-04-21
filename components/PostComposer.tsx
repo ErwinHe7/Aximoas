@@ -86,7 +86,7 @@ export function PostComposer() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          author_name: name.trim() || 'Anonymous',
+          author_name: name.trim() || undefined, // let server use session name
           content: content.trim(),
           images: images.map((i) => i.url),
         }),
@@ -140,7 +140,7 @@ export function PostComposer() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name"
+            placeholder="Your name (auto-filled when signed in)"
             className="w-full border-none bg-transparent text-xs focus:outline-none"
             style={{ color: 'rgba(247,240,232,0.4)', caretColor: 'var(--molt-shell)' }}
           />
