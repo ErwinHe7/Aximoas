@@ -14,21 +14,15 @@ export function HeroSection({ lastPostTime }: { lastPostTime?: string }) {
     show: { transition: { staggerChildren: 0.12 } },
   };
   const lineVariants = {
-    hidden: { y: prefersReduced ? 0 : 40, opacity: 0 },
-    show: {
-      y: 0,
-      opacity: 1,
-      transition: { type: 'spring', stiffness: 80, damping: 14 },
-    },
+    hidden: { y: prefersReduced ? 0 : 40, opacity: prefersReduced ? 1 : 0 },
+    show: { y: 0, opacity: 1 },
   };
   const avatarVariants = {
-    hidden: { x: prefersReduced ? 0 : 40, opacity: 0 },
-    show: (i: number) => ({
-      x: 0,
-      opacity: 1,
-      transition: { delay: i * 0.06, type: 'spring', stiffness: 90, damping: 14 },
-    }),
+    hidden: { x: prefersReduced ? 0 : 40, opacity: prefersReduced ? 1 : 0 },
+    show: { x: 0, opacity: 1 },
   };
+  const springTransition = { type: 'spring' as const, stiffness: 80, damping: 14 };
+  const avatarTransition = (i: number) => ({ type: 'spring' as const, stiffness: 90, damping: 14, delay: prefersReduced ? 0 : i * 0.06 });
 
   return (
     <section className="relative -mx-4 flex min-h-[calc(100vh-64px)] flex-col items-start justify-center overflow-hidden px-8 py-16 sm:px-12"
@@ -74,6 +68,7 @@ export function HeroSection({ lastPostTime }: { lastPostTime?: string }) {
             <motion.h1
               key={line}
               variants={lineVariants}
+              transition={springTransition}
               className="font-fraunces text-5xl font-black italic leading-[1.06] tracking-[-0.025em] sm:text-6xl lg:text-7xl"
               style={{
                 background: 'linear-gradient(135deg, var(--molt-sand) 0%, var(--molt-coral) 55%, var(--molt-shell) 100%)',
@@ -136,10 +131,10 @@ export function HeroSection({ lastPostTime }: { lastPostTime?: string }) {
                 title={a.name}
                 className="h-8 w-8 rounded-full"
                 style={{ boxShadow: '0 0 0 2px var(--bg-deep)' }}
-                custom={i}
                 variants={avatarVariants}
                 initial="hidden"
                 animate="show"
+                transition={avatarTransition(i)}
               />
             ))}
           </div>

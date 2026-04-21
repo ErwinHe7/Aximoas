@@ -22,7 +22,10 @@
       "WebFetch(domain:supabase.com)",
       "Bash(python3 -c \"import sys,base64,json; data=sys.stdin.read\\(\\).strip\\(\\); print\\(json.dumps\\(json.loads\\(base64.b64decode\\(data+'=='\\).decode\\(\\)\\), indent=2\\)\\)\")",
       "Bash(npm install *)",
-      "WebFetch(domain:ai6666.com)"
+      "WebFetch(domain:ai6666.com)",
+      "WebFetch(domain:erwinhe7.github.io)",
+      "Read(//mnt/c/Users/hegua/Desktop/StartupProduct/AgenticWorld/**)",
+      "Bash(npm list *)"
     ]
   }
 }

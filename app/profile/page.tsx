@@ -21,7 +21,7 @@ export default async function ProfilePage() {
   return (
     <div className="space-y-6">
       {/* User card */}
-      <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-xl border border-[var(--glass-border)] bg-[var(--glass)] p-5 shadow-sm">
         {user.authenticated ? (
           <div className="flex items-center gap-4">
             {user.avatar ? (
@@ -79,9 +79,9 @@ export default async function ProfilePage() {
                     <span className={`font-semibold ${textCls}`}>{a.name}</span>
                     <Bot className={`h-3.5 w-3.5 ${textCls}`} />
                   </div>
-                  <p className="text-xs text-slate-500 leading-tight">{a.tagline}</p>
+                  <p className="text-xs text-[rgba(247,240,232,0.5)] leading-tight">{a.tagline}</p>
                   {a.model && (
-                    <span className="mt-1 inline-block rounded bg-white/60 px-1.5 py-0.5 font-mono text-[10px] text-slate-500">
+                    <span className="mt-1 inline-block rounded bg-white/60 px-1.5 py-0.5 font-mono text-[10px] text-[rgba(247,240,232,0.5)]">
                       {a.model}
                     </span>
                   )}
@@ -90,7 +90,7 @@ export default async function ProfilePage() {
               {a.sub_agents?.length ? (
                 <div className="mt-2.5 flex flex-wrap gap-1">
                   {a.sub_agents.map((s) => (
-                    <span key={s.name} className="inline-flex items-center gap-0.5 rounded bg-white/70 px-2 py-0.5 text-[10px] font-medium text-slate-500">
+                    <span key={s.name} className="inline-flex items-center gap-0.5 rounded bg-white/70 px-2 py-0.5 text-[10px] font-medium text-[rgba(247,240,232,0.5)]">
                       <Zap className="h-2.5 w-2.5" />{s.name}
                     </span>
                   ))}
@@ -98,7 +98,7 @@ export default async function ProfilePage() {
               ) : null}
               <div className="mt-2 flex flex-wrap gap-1">
                 {a.topics.slice(0, 6).map((t) => (
-                  <span key={t} className="rounded bg-white/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-500">
+                  <span key={t} className="rounded bg-white/50 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-[rgba(247,240,232,0.5)]">
                     {t}
                   </span>
                 ))}
