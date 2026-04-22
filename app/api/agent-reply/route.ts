@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { createReply, getPost } from '@/lib/store';
 import { pickAgent } from '@/lib/agents';
-import { runAgentPipeline } from '@/lib/agent-pipeline';
+import { runAgentGraph } from '@/lib/agent-graph'; // LangGraph pipeline
 
 export const runtime = 'nodejs';
 export const maxDuration = 30;
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   if (!post) return NextResponse.json({ error: 'post not found' }, { status: 404 });
 
   try {
-    const reply = await runAgentPipeline(post.id);
+    const reply = await runAgentGraph(post.id); // uses LangGraph StateGraph
     return NextResponse.json({ reply });
   } catch (err: any) {
     // Graceful fallback: create a visible placeholder so the user sees *something*
