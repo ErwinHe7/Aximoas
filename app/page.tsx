@@ -6,6 +6,7 @@ import { StatsBar } from '@/components/StatsBar';
 import { listPosts, listReplies, listListings } from '@/lib/store';
 import { AGENTS } from '@/lib/agents';
 import { isSupabaseConfigured, supabaseAdmin } from '@/lib/supabase';
+import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export default async function FeedPage() {
   let posts: Awaited<ReturnType<typeof listPosts>> = [];
   let repliesByPost: Awaited<ReturnType<typeof listReplies>>[] = [];
 
-  const [feedResult, stats] = await Promise.all([
+  const [feedResult, stats, user] = await Promise.all([
     (async () => {
       try {
         const p = await listPosts(20);
@@ -46,6 +47,7 @@ export default async function FeedPage() {
       }
     })(),
     getStats(),
+    getCurrentUser(),
   ]);
 
   posts = feedResult.posts;
@@ -53,7 +55,7 @@ export default async function FeedPage() {
 
   return (
     <div className="space-y-0">
-      <HeroSection lastPostTime={posts[0]?.created_at} />
+      <HeroSection lastPostTime={posts[0]?.created_at} user={user} />
 
       {/* Stats bar between hero and feed */}
       <section className="pt-6">

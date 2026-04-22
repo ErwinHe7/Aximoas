@@ -138,9 +138,9 @@ export function PostComposer() {
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Your name (auto-filled when signed in)"
-            className="w-full border-none bg-transparent text-xs focus:outline-none"
-            style={{ color: 'var(--lt-subtle)', caretColor: 'var(--molt-shell)' }}
+            placeholder="Your name"
+            className="w-full border-none bg-transparent text-xs font-medium focus:outline-none"
+            style={{ color: name ? 'var(--lt-text)' : 'var(--lt-subtle)', caretColor: 'var(--molt-shell)' }}
           />
           <textarea
             value={content}
