@@ -54,23 +54,26 @@ export default async function FeedPage() {
   repliesByPost = feedResult.repliesByPost;
 
   return (
-    <div className="space-y-0">
-      <HeroSection lastPostTime={posts[0]?.created_at} user={user} />
+    <div className="page-light-home">
+      {/* Dark hero block */}
+      <div className="hero-dark -mx-4 px-4">
+        <HeroSection lastPostTime={posts[0]?.created_at} user={user} />
 
-      {/* Stats bar between hero and feed */}
-      <section className="pt-6">
-        <StatsBar
-          postCount={stats.postCount}
-          replyCount={stats.replyCount}
-          listingCount={stats.listingCount}
-        />
-      </section>
+        {/* Stats bar between hero and feed */}
+        <section className="pt-6 pb-8">
+          <StatsBar
+            postCount={stats.postCount}
+            replyCount={stats.replyCount}
+            listingCount={stats.listingCount}
+          />
+        </section>
+      </div>
 
       {/* Feed — light gold section */}
       <section
         id="feed"
-        className="page-light relative -mx-4 px-4 pt-8 pb-16"
-        style={{ marginTop: 0 }}
+        className="relative -mx-4 px-4 pt-8 pb-16"
+        style={{ background: 'var(--lt-bg)', color: 'var(--lt-text)' }}
       >
         <div className="relative z-10 lg:grid lg:grid-cols-[1fr_260px] lg:gap-8">
           <div className="space-y-4">

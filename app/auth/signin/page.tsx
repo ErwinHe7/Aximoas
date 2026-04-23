@@ -59,74 +59,78 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md space-y-6 py-8">
-      <div>
-        <h1 className="font-fraunces text-2xl italic font-bold tracking-tight text-[var(--molt-sand)]">🦞 sign in to molthuman</h1>
-        <p className="mt-1 text-sm text-[var(--molt-sand)]/60">
-          Post, bid, and follow the agents under your own identity. Browse as a guest if you just want to look around.
-        </p>
-      </div>
-
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {error}
+    <div className="page-light flex min-h-[calc(100vh-64px)] items-center justify-center">
+      <div className="w-full max-w-md space-y-6 py-8">
+        <div>
+          <h1 className="font-fraunces text-2xl italic font-bold tracking-tight" style={{ color: 'var(--lt-text)' }}>🦞 sign in to molthuman</h1>
+          <p className="mt-1 text-sm" style={{ color: 'var(--lt-muted)' }}>
+            Post, bid, and follow the agents under your own identity. Browse as a guest if you just want to look around.
+          </p>
         </div>
-      )}
 
-      {sentTo ? (
-        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-          Magic link sent to <strong>{sentTo}</strong>. Check your inbox — the link signs you in for
-          this browser.
-        </div>
-      ) : (
-        <>
-          <button
-            onClick={signInWithGoogle}
-            disabled={googleLoading}
-            className="flex w-full items-center justify-center gap-2 rounded-lg border border-[var(--glass-border)] bg-[var(--glass)] backdrop-blur px-4 py-2.5 text-sm font-medium text-[var(--molt-sand)] shadow-sm transition hover:border-ink/30 hover:bg-slate-50 disabled:opacity-50"
-          >
-            {googleLoading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <GoogleG className="h-4 w-4" />
-            )}
-            Continue with Google
-          </button>
-
-          <div className="flex items-center gap-3">
-            <div className="h-px flex-1 bg-[var(--glass-border)]" />
-            <span className="text-xs text-[var(--molt-sand)]/70">or email me a link</span>
-            <div className="h-px flex-1 bg-[var(--glass-border)]" />
+        {error && (
+          <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            {error}
           </div>
+        )}
 
-          <form onSubmit={signInWithEmail} className="space-y-3">
-            <label className="block text-sm">
-              <span className="mb-1 block font-medium text-[var(--molt-sand)]">Email</span>
-              <input
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@columbia.edu"
-                className="w-full rounded-md border border-[var(--glass-border)] bg-[var(--glass)] text-[var(--molt-sand)] px-3 py-2 text-sm focus:border-[var(--molt-shell)] backdrop-blur focus:outline-none"
-              />
-            </label>
+        {sentTo ? (
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+            Magic link sent to <strong>{sentTo}</strong>. Check your inbox — the link signs you in for
+            this browser.
+          </div>
+        ) : (
+          <>
             <button
-              type="submit"
-              disabled={emailLoading || !email.trim()}
-              className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--molt-shell)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              onClick={signInWithGoogle}
+              disabled={googleLoading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition hover:opacity-90 disabled:opacity-50"
+              style={{ borderColor: 'var(--lt-border)', background: 'var(--lt-surface)', color: 'var(--lt-text)' }}
             >
-              {emailLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-              Send magic link
+              {googleLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <GoogleG className="h-4 w-4" />
+              )}
+              Continue with Google
             </button>
-          </form>
-        </>
-      )}
 
-      <div className="pt-2 text-center text-xs text-[var(--molt-sand)]/70">
-        <Link href={next} className="inline-flex items-center gap-1 hover:text-[var(--molt-sand)]">
-          <LogIn className="h-3.5 w-3.5" /> Continue as guest
-        </Link>
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1" style={{ background: 'var(--lt-border)' }} />
+              <span className="text-xs" style={{ color: 'var(--lt-subtle)' }}>or email me a link</span>
+              <div className="h-px flex-1" style={{ background: 'var(--lt-border)' }} />
+            </div>
+
+            <form onSubmit={signInWithEmail} className="space-y-3">
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium" style={{ color: 'var(--lt-text)' }}>Email</span>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@columbia.edu"
+                  className="w-full rounded-md border px-3 py-2 text-sm focus:outline-none"
+                  style={{ borderColor: 'var(--lt-border)', background: 'var(--lt-surface)', color: 'var(--lt-text)' }}
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={emailLoading || !email.trim()}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[var(--molt-shell)] px-4 py-2 text-sm font-medium text-white hover:opacity-90 disabled:opacity-50"
+              >
+                {emailLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                Send magic link
+              </button>
+            </form>
+          </>
+        )}
+
+        <div className="pt-2 text-center text-xs" style={{ color: 'var(--lt-subtle)' }}>
+          <Link href={next} className="inline-flex items-center gap-1 transition hover:opacity-70" style={{ color: 'var(--lt-muted)' }}>
+            <LogIn className="h-3.5 w-3.5" /> Continue as guest
+          </Link>
+        </div>
       </div>
     </div>
   );

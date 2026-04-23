@@ -55,18 +55,53 @@ html, body {
               inset 0 0 40px rgba(11,79,108,0.03);
 }
 
+/* ── Home page: gold base with dark hero block ── */
+.page-light-home {
+  background: var(--lt-bg);
+  color: var(--lt-text);
+  min-height: 100vh;
+  margin: -1.5rem -1rem -6rem;
+  padding: 0 1rem 6rem;
+}
+.hero-dark {
+  background: var(--bg-deep);
+  color: var(--molt-sand);
+}
+
 .page-light h1,
 .page-light h2,
 .page-light h3,
-.page-light h4 {
+.page-light h4,
+.page-light-home h1,
+.page-light-home h2,
+.page-light-home h3,
+.page-light-home h4 {
   color: var(--lt-text);
 }
 
 .page-light p,
 .page-light li,
 .page-light span,
-.page-light label {
+.page-light label,
+.page-light-home p,
+.page-light-home li,
+.page-light-home span,
+.page-light-home label {
   color: var(--lt-text);
+}
+
+/* Reset dark hero block text inside home page */
+.hero-dark h1,
+.hero-dark h2,
+.hero-dark h3,
+.hero-dark h4 {
+  color: var(--molt-sand);
+}
+.hero-dark p,
+.hero-dark li,
+.hero-dark span,
+.hero-dark label {
+  color: var(--molt-sand);
 }
 
 /* Scrollbar */
@@ -116,8 +151,10 @@ html, body {
 .nav-item:hover { color: var(--molt-sand); }
 /* Nav items inside light pages */
 .page-light .nav-item,
+.page-light-home .nav-item,
 header.nav-light .nav-item { color: var(--lt-muted); }
 .page-light .nav-item:hover,
+.page-light-home .nav-item:hover,
 header.nav-light .nav-item:hover { color: var(--molt-shell); }
 
 @media (prefers-reduced-motion: reduce) {
