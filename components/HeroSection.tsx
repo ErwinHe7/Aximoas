@@ -29,30 +29,36 @@ export function HeroSection({ lastPostTime, user }: { lastPostTime?: string; use
       className="relative -mx-4 flex min-h-[calc(100vh-64px)] flex-col items-start justify-center overflow-hidden px-8 py-16 sm:px-12"
       style={{ background: 'var(--bg-deep)' }}
     >
-      {/* ── Right-side visual: 🦞 emoji ── */}
+      {/* ── Right-side visual: lobster illustration + logo watermark ── */}
       <div className="pointer-events-none absolute inset-y-0 right-0 flex w-1/2 items-center justify-center overflow-hidden">
 
-        {/* 🦞 emoji — fades in, then bobs forever */}
-        <motion.span
+        {/* AXIO7 logo — faint watermark behind lobster */}
+        <motion.img
+          src="/logo.png"
+          alt=""
           aria-hidden
-          style={{ y: yLobster, filter: 'drop-shadow(0 8px 32px rgba(216,71,39,0.45))' }}
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={prefersReduced
-            ? { opacity: 1, scale: 1 }
-            : { opacity: 1, scale: 1, y: [0, -20, 0] }
-          }
-          transition={prefersReduced
-            ? { duration: 0.6, delay: 0.2 }
-            : {
-                opacity: { duration: 0.6, delay: 0.2 },
-                scale:   { duration: 0.6, delay: 0.2 },
-                y:       { duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.8 },
-              }
-          }
-          className="select-none text-[180px] leading-none sm:text-[220px] lg:text-[260px]"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 0.10 }}
+          transition={{ duration: 1.4, ease: 'easeOut' }}
+          className="absolute w-[380px] max-w-none select-none sm:w-[460px] lg:w-[540px]"
+        />
+
+        {/* Lobster — flat brand-style SVG, gentle float */}
+        <motion.div
+          aria-hidden
+          style={{ y: yLobster }}
+          initial={{ opacity: 0, scale: 0.88 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
         >
-          🦞
-        </motion.span>
+          <motion.div
+            animate={prefersReduced ? {} : { y: [0, -16, 0], rotate: [-1, 1, -1] }}
+            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
+            style={{ filter: 'drop-shadow(0 12px 40px rgba(216,71,39,0.5)) drop-shadow(0 4px 16px rgba(11,79,108,0.3))' }}
+          >
+            <LobsterIllustration />
+          </motion.div>
+        </motion.div>
       </div>
 
       {/* ── Left-side text content ── */}
@@ -65,7 +71,7 @@ export function HeroSection({ lastPostTime, user }: { lastPostTime?: string; use
           initial={{ opacity: 0, y: prefersReduced ? 0 : -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: 'easeOut' }}
-          className="mb-6 h-16 w-auto sm:h-20 lg:h-24"
+          className="mb-6 h-20 w-auto sm:h-24 lg:h-28"
         />
 
         <p className="mb-5 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--molt-coral)' }}>
@@ -177,6 +183,99 @@ export function HeroSection({ lastPostTime, user }: { lastPostTime?: string; use
         <span className="text-lg">↓</span>
       </div>
     </section>
+  );
+}
+
+function LobsterIllustration() {
+  return (
+    <svg width="320" height="320" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+      <defs>
+        <radialGradient id="shell1" cx="35%" cy="28%" r="65%">
+          <stop offset="0%" stopColor="#FF7455"/>
+          <stop offset="60%" stopColor="#D84727"/>
+          <stop offset="100%" stopColor="#9A2810"/>
+        </radialGradient>
+        <radialGradient id="shell2" cx="35%" cy="28%" r="65%">
+          <stop offset="0%" stopColor="#E86040"/>
+          <stop offset="100%" stopColor="#B83A1F"/>
+        </radialGradient>
+        <radialGradient id="claw" cx="40%" cy="30%" r="65%">
+          <stop offset="0%" stopColor="#E05030"/>
+          <stop offset="100%" stopColor="#7A2010"/>
+        </radialGradient>
+        <linearGradient id="belly" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor="#C84020"/>
+          <stop offset="100%" stopColor="#8B2408"/>
+        </linearGradient>
+      </defs>
+
+      {/* Long antennae — swept back elegantly */}
+      <path d="M82 42 Q55 18 20 8" stroke="#F9B5A4" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.9"/>
+      <path d="M118 42 Q145 18 180 8" stroke="#F9B5A4" strokeWidth="2" strokeLinecap="round" fill="none" opacity="0.9"/>
+      <path d="M84 46 Q62 30 44 24" stroke="#FECABA" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.7"/>
+      <path d="M116 46 Q138 30 156 24" stroke="#FECABA" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.7"/>
+
+      {/* Cephalothorax — clean elongated shield shape */}
+      <path d="M72 38 Q62 34 64 26 Q72 16 100 16 Q128 16 136 26 Q138 34 128 38 Q116 44 100 45 Q84 44 72 38Z" fill="url(#shell1)"/>
+      {/* Rostrum spike */}
+      <path d="M95 16 L100 6 L105 16Z" fill="#C84020"/>
+      {/* Eye stalks + eyes */}
+      <line x1="80" y1="28" x2="74" y2="20" stroke="#8B2A12" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="73" cy="19" r="4.5" fill="#F7F0E8"/>
+      <circle cx="73.5" cy="19.5" r="2.5" fill="#0B4F6C"/>
+      <line x1="120" y1="28" x2="126" y2="20" stroke="#8B2A12" strokeWidth="2" strokeLinecap="round"/>
+      <circle cx="127" cy="19" r="4.5" fill="#F7F0E8"/>
+      <circle cx="126.5" cy="19.5" r="2.5" fill="#0B4F6C"/>
+      {/* Specular highlight on carapace */}
+      <ellipse cx="90" cy="30" rx="8" ry="6" fill="white" opacity="0.12" transform="rotate(-20 90 30)"/>
+
+      {/* Thorax — segmented body */}
+      <rect x="72" y="44" width="56" height="46" rx="10" fill="url(#shell2)"/>
+      <path d="M72 56 Q100 60 128 56" stroke="rgba(0,0,0,0.12)" strokeWidth="1.2" fill="none"/>
+      <path d="M72 68 Q100 72 128 68" stroke="rgba(0,0,0,0.12)" strokeWidth="1.2" fill="none"/>
+      <path d="M72 80 Q100 84 128 80" stroke="rgba(0,0,0,0.12)" strokeWidth="1.2" fill="none"/>
+      <ellipse cx="88" cy="56" rx="7" ry="12" fill="white" opacity="0.08" transform="rotate(-10 88 56)"/>
+
+      {/* LEFT CLAW — large prominent cheliped */}
+      <path d="M72 52 L46 56 L36 62" stroke="#C84020" strokeWidth="6" strokeLinecap="round" fill="none"/>
+      {/* Claw body */}
+      <path d="M18 54 C8 48 4 64 12 70 C18 74 28 72 32 64 C36 56 28 46 18 54Z" fill="url(#claw)"/>
+      {/* Claw finger (dactyl) */}
+      <path d="M28 62 C22 54 14 54 12 58" stroke="#8B2A12" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+      <ellipse cx="18" cy="62" rx="5" ry="7" fill="white" opacity="0.09" transform="rotate(-15 18 62)"/>
+
+      {/* RIGHT CLAW */}
+      <path d="M128 52 L154 56 L164 62" stroke="#C84020" strokeWidth="6" strokeLinecap="round" fill="none"/>
+      <path d="M182 54 C192 48 196 64 188 70 C182 74 172 72 168 64 C164 56 172 46 182 54Z" fill="url(#claw)"/>
+      <path d="M172 62 C178 54 186 54 188 58" stroke="#8B2A12" strokeWidth="3.5" strokeLinecap="round" fill="none"/>
+      <ellipse cx="182" cy="62" rx="5" ry="7" fill="white" opacity="0.09" transform="rotate(15 182 62)"/>
+
+      {/* Walking legs — 3 pairs, clean lines */}
+      <line x1="76" y1="74" x2="54" y2="92" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round"/>
+      <line x1="78" y1="82" x2="56" y2="102" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round"/>
+      <line x1="80" y1="88" x2="62" y2="110" stroke="#B83A1F" strokeWidth="2" strokeLinecap="round"/>
+      <line x1="124" y1="74" x2="146" y2="92" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round"/>
+      <line x1="122" y1="82" x2="144" y2="102" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round"/>
+      <line x1="120" y1="88" x2="138" y2="110" stroke="#B83A1F" strokeWidth="2" strokeLinecap="round"/>
+
+      {/* Abdomen — curved segments */}
+      <path d="M74 90 Q72 100 74 110 Q80 126 100 130 Q120 126 126 110 Q128 100 126 90 Q116 96 100 97 Q84 96 74 90Z" fill="url(#shell2)"/>
+      <path d="M75 100 Q100 106 125 100" stroke="rgba(0,0,0,0.15)" strokeWidth="1.3" fill="none"/>
+      <path d="M76 112 Q100 117 124 112" stroke="rgba(0,0,0,0.15)" strokeWidth="1.3" fill="none"/>
+      <path d="M78 122 Q100 126 122 122" stroke="rgba(0,0,0,0.15)" strokeWidth="1.3" fill="none"/>
+
+      {/* Fan tail — 5 plates, fanned elegantly */}
+      {/* Central telson */}
+      <path d="M92 128 Q88 142 86 158 Q90 164 100 165 Q110 164 114 158 Q112 142 108 128Z" fill="#C84020"/>
+      {/* Left uropod 1 */}
+      <path d="M88 128 Q78 138 70 154 Q74 160 82 158 Q90 148 90 130Z" fill="#B83A1F"/>
+      {/* Left uropod 2 */}
+      <path d="M84 126 Q68 132 58 146 Q62 153 70 150 Q80 140 84 126Z" fill="#9A2810"/>
+      {/* Right uropod 1 */}
+      <path d="M112 128 Q122 138 130 154 Q126 160 118 158 Q110 148 110 130Z" fill="#B83A1F"/>
+      {/* Right uropod 2 */}
+      <path d="M116 126 Q132 132 142 146 Q138 153 130 150 Q120 140 116 126Z" fill="#9A2810"/>
+    </svg>
   );
 }
 
