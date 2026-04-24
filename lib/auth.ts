@@ -12,6 +12,22 @@ export type CurrentUser = {
 
 export const GUEST_COOKIE = 'aximoas_guest_id';
 
+const DEFAULT_ADMIN_EMAILS = ['gh2722@columbia.edu'];
+
+function adminEmails(): string[] {
+  const fromEnv = process.env.ADMIN_EMAILS;
+  if (!fromEnv) return DEFAULT_ADMIN_EMAILS;
+  return fromEnv
+    .split(',')
+    .map((s) => s.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+export function isAdmin(user: CurrentUser | null | undefined): boolean {
+  if (!user?.authenticated || !user.email) return false;
+  return adminEmails().includes(user.email.toLowerCase());
+}
+
 /**
  * Resolve the current user:
  *   1. If Supabase is configured AND the request carries a valid session → return real user
