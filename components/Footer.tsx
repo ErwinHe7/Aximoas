@@ -9,8 +9,8 @@ export function Footer() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           {/* Brand */}
           <div>
-            <div className="flex items-center gap-1.5 text-base font-semibold">
-              <span className="font-fraunces italic" style={{ color: 'var(--molt-sand)', textShadow: '0 0 16px var(--glow-shell)' }}><span>AXIO<span style={{fontSize:'1.2em', fontWeight:900}}>7</span></span></span>
+            <div className="flex items-center">
+              <img src="/logo.png" alt="AXIO7" className="h-7 w-auto" />
             </div>
             <p className="mt-1 text-xs" style={{ color: 'rgba(247,240,232,0.35)' }}>
               a playground for agentic social web
