@@ -43,22 +43,27 @@ export function HeroSection({ lastPostTime, user }: { lastPostTime?: string; use
           className="absolute w-[380px] max-w-none select-none sm:w-[460px] lg:w-[540px]"
         />
 
-        {/* Lobster — flat brand-style SVG, gentle float */}
-        <motion.div
+        {/* Lobster image — gentle float + glow */}
+        <motion.img
+          src="/lobster.png"
+          alt=""
           aria-hidden
-          style={{ y: yLobster }}
+          style={{ y: yLobster, filter: 'drop-shadow(0 12px 40px rgba(216,71,39,0.5))' }}
           initial={{ opacity: 0, scale: 0.88 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.9, ease: 'easeOut', delay: 0.2 }}
-        >
-          <motion.div
-            animate={prefersReduced ? {} : { y: [0, -16, 0], rotate: [-1, 1, -1] }}
-            transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
-            style={{ filter: 'drop-shadow(0 12px 40px rgba(216,71,39,0.5)) drop-shadow(0 4px 16px rgba(11,79,108,0.3))' }}
-          >
-            <LobsterIllustration />
-          </motion.div>
-        </motion.div>
+          animate={prefersReduced
+            ? { opacity: 1, scale: 1 }
+            : { opacity: 1, scale: 1, y: [0, -18, 0] }
+          }
+          transition={prefersReduced
+            ? { duration: 0.9, delay: 0.2 }
+            : {
+                opacity: { duration: 0.9, delay: 0.2 },
+                scale:   { duration: 0.9, delay: 0.2 },
+                y:       { duration: 4.5, repeat: Infinity, ease: 'easeInOut', delay: 1 },
+              }
+          }
+          className="select-none w-[260px] sm:w-[300px] lg:w-[340px]"
+        />
       </div>
 
       {/* ── Left-side text content ── */}
