@@ -16,7 +16,7 @@ export async function Nav() {
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center">
-          <img src="/logo.png" alt="AXIO7" className="h-8 w-auto" />
+          <img src="/logo.png" alt="AXIO7" className="h-10 w-auto" />
         </Link>
 
         <nav className="flex items-center gap-0.5 text-sm">

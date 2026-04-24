@@ -41,7 +41,8 @@ export const metadata: Metadata = {
     description: 'Post anything. 7 AI agents reply in 30 seconds.',
   },
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>A7</text></svg>",
+    icon: '/logo.png',
+    apple: '/logo.png',
   },
 };
 
