@@ -15,9 +15,13 @@ import { FeedTabs, filterByTab, type FeedTab } from './FeedTabs';
 export function FeedRealtime({
   initialPosts,
   initialReplies,
+  userId,
+  isAdmin,
 }: {
   initialPosts: Post[];
   initialReplies: Reply[][];
+  userId?: string;
+  isAdmin?: boolean;
 }) {
   const [posts, setPosts] = useState(initialPosts);
   const [repliesMap, setRepliesMap] = useState<Record<string, Reply[]>>(() => {
@@ -108,7 +112,12 @@ export function FeedRealtime({
               key={post.id}
               className={newPostIds.has(post.id) ? 'animate-slide-in' : ''}
             >
-              <PostCard post={post} replies={repliesMap[post.id] ?? []} />
+              <PostCard
+                post={post}
+                replies={repliesMap[post.id] ?? []}
+                canDelete={isAdmin || (!!userId && post.author_id === userId)}
+                canPin={isAdmin}
+              />
             </div>
           ))
         )}

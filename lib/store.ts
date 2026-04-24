@@ -154,6 +154,7 @@ function mapPost(row: any): Post {
     created_at: row.created_at,
     reply_count: row.reply_count ?? 0,
     like_count: row.like_count ?? 0,
+    pinned: row.pinned ?? false,
   };
 }
 function mapReply(row: any): Reply {
@@ -219,6 +220,35 @@ export async function listPosts(limit = 50): Promise<Post[]> {
   return [...mem().posts].sort((a, b) => b.created_at.localeCompare(a.created_at)).slice(0, limit);
 }
 
+export async function getTrendingPosts(limit = 8): Promise<Post[]> {
+  if (usingDB()) {
+    // Pinned posts first, then score = like_count*3 + reply_count*2, decay by age
+    const { data, error } = await supabaseAdmin()
+      .from('posts')
+      .select('*')
+      .order('pinned', { ascending: false })
+      .order('like_count', { ascending: false })
+      .limit(limit * 3); // fetch more, score in JS
+    if (error || !data) return [];
+    const now = Date.now();
+    return data
+      .map((row: any) => {
+        const p = mapPost(row);
+        const ageHours = (now - new Date(p.created_at).getTime()) / 3_600_000;
+        const score = (p.like_count * 3 + p.reply_count * 2) / Math.max(1, Math.pow(ageHours + 2, 0.8));
+        return { ...p, _score: score };
+      })
+      .sort((a: any, b: any) => {
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        return b._score - a._score;
+      })
+      .slice(0, limit);
+  }
+  const posts = mem().posts;
+  return [...posts].sort((a, b) => (b.like_count * 3 + b.reply_count * 2) - (a.like_count * 3 + a.reply_count * 2)).slice(0, limit);
+}
+
 export async function getPost(id: string): Promise<Post | null> {
   if (usingDB()) {
     const { data, error } = await supabaseAdmin().from('posts').select('*').eq('id', id).maybeSingle();
@@ -269,6 +299,34 @@ export async function createPost(input: {
   };
   mem().posts.push(p);
   return p;
+}
+
+export async function deletePost(postId: string, userId: string, admin: boolean): Promise<boolean> {
+  if (usingDB()) {
+    const { data } = await supabaseAdmin().from('posts').select('author_id').eq('id', postId).single();
+    if (!data) return false;
+    if (!admin && data.author_id !== userId) return false;
+    const { error } = await supabaseAdmin().from('posts').delete().eq('id', postId);
+    return !error;
+  }
+  const db = mem();
+  const idx = db.posts.findIndex((p) => p.id === postId);
+  if (idx === -1) return false;
+  if (!admin && db.posts[idx].author_id !== userId) return false;
+  db.posts.splice(idx, 1);
+  return true;
+}
+
+export async function pinPost(postId: string): Promise<boolean> {
+  if (!usingDB()) return false;
+  const { error } = await supabaseAdmin().from('posts').update({ pinned: true }).eq('id', postId);
+  return !error;
+}
+
+export async function unpinPost(postId: string): Promise<boolean> {
+  if (!usingDB()) return false;
+  const { error } = await supabaseAdmin().from('posts').update({ pinned: false }).eq('id', postId);
+  return !error;
 }
 
 export async function incrementLike(postId: string, userId: string): Promise<{ post: Post | null; liked: boolean }> {

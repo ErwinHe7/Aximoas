@@ -6,7 +6,7 @@ import { StatsBar } from '@/components/StatsBar';
 import { listPosts, listReplies, listListings } from '@/lib/store';
 import { AGENTS } from '@/lib/agents';
 import { isSupabaseConfigured, supabaseAdmin } from '@/lib/supabase';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,7 +78,7 @@ export default async function FeedPage() {
         <div className="relative z-10 lg:grid lg:grid-cols-[1fr_260px] lg:gap-8">
           <div className="space-y-4">
             <PostComposer />
-            <FeedRealtime initialPosts={posts} initialReplies={repliesByPost} />
+            <FeedRealtime initialPosts={posts} initialReplies={repliesByPost} userId={user.id} isAdmin={isAdmin(user)} />
           </div>
           <aside className="sticky top-24 mt-4 h-max space-y-4 lg:mt-0">
             <TrendingStrip />

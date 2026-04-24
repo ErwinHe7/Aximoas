@@ -76,7 +76,15 @@
       "Bash(git stash *)",
       "Bash(git diff *)",
       "Bash(git rebase *)",
-      "Bash(GIT_EDITOR=true git rebase --continue)"
+      "Bash(GIT_EDITOR=true git rebase --continue)",
+      "Bash(git -C .claude/worktrees/__TRACKED_VAR__ diff HEAD --name-only)",
+      "Bash(git -C \".claude/worktrees/agent-ad543e32\" status --short)",
+      "Bash(git -C .claude/worktrees/__TRACKED_VAR__ status --short)",
+      "Bash(cp \".claude/worktrees/agent-a8398e85/app/api/fanout/route.ts\" \"app/api/fanout/route.ts\")",
+      "Bash(cp \".claude/worktrees/agent-a8398e85/components/PostComposer.tsx\" \"components/PostComposer.tsx\")",
+      "Bash(cp \".claude/worktrees/agent-a8398e85/lib/agent-fanout.ts\" \"lib/agent-fanout.ts\")",
+      "Bash(cp \".claude/worktrees/agent-a8398e85/lib/agents.ts\" \"lib/agents.ts\")",
+      "Bash(cp \".claude/worktrees/agent-a4141620/.env.example\" \".env.example\")"
     ]
   }
 }

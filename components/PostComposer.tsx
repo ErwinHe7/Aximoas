@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, Send, ImagePlus, X, Sparkles } from 'lucide-react';
-import { AGENTS } from '@/lib/agents';
+import { AGENTS, extractMentionedAgentId } from '@/lib/agents';
 import { supabaseBrowser } from '@/lib/supabase-browser';
 
 type UploadedImage = { url: string; preview: string };
@@ -77,6 +77,10 @@ export function PostComposer() {
     });
   }
 
+  // Detect @mention in the current textarea content
+  const mentionedAgentId = extractMentionedAgentId(content);
+  const mentionedAgent = mentionedAgentId ? AGENTS.find((a) => a.id === mentionedAgentId) ?? null : null;
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!content.trim() || submitting) return;
@@ -99,7 +103,7 @@ export function PostComposer() {
       fetch('/api/fanout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ post_id: post.id }),
+        body: JSON.stringify({ post_id: post.id, ...(mentionedAgentId ? { mention: mentionedAgentId } : {}) }),
       }).catch(() => {});
       setTimeout(() => router.refresh(), 5000);
       setTimeout(() => router.refresh(), 12000);
@@ -178,20 +182,48 @@ export function PostComposer() {
 
       {/* Agent preview strip */}
       {expanded && (
-        <div className="mt-4 flex items-center gap-2 border-t pt-3" style={{ borderColor: 'var(--lt-border)' }}>
-          <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--molt-shell)' }} />
-          <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--lt-subtle)' }}>
-            will reply:
-          </span>
-          <div className="flex -space-x-2">
-            {AGENTS.map((a) => (
-              <img key={a.id} src={a.avatar} alt={a.name} title={a.name}
-                className="h-6 w-6 rounded-full transition hover:z-10 hover:scale-110"
-                style={{ boxShadow: '0 0 0 2px white' }}
-              />
-            ))}
+        <div className="mt-4 border-t pt-3" style={{ borderColor: 'var(--lt-border)' }}>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-3.5 w-3.5" style={{ color: 'var(--molt-shell)' }} />
+            <span className="text-[11px] font-medium uppercase tracking-wider" style={{ color: 'var(--lt-subtle)' }}>
+              will reply:
+            </span>
+            <div className="flex -space-x-2">
+              {AGENTS.map((a) => (
+                <img
+                  key={a.id}
+                  src={a.avatar}
+                  alt={a.name}
+                  title={a.name}
+                  className="h-6 w-6 rounded-full transition hover:z-10 hover:scale-110"
+                  style={{
+                    boxShadow: mentionedAgentId === a.id
+                      ? '0 0 0 2.5px var(--molt-coral), 0 0 0 4px rgba(216,71,39,0.25)'
+                      : '0 0 0 2px white',
+                    opacity: mentionedAgentId && mentionedAgentId !== a.id ? 0.45 : 1,
+                    transform: mentionedAgentId === a.id ? 'scale(1.18)' : undefined,
+                    zIndex: mentionedAgentId === a.id ? 10 : undefined,
+                  }}
+                />
+              ))}
+            </div>
+            <span className="text-[11px]" style={{ color: 'var(--lt-subtle)' }}>· ~30s</span>
           </div>
-          <span className="text-[11px]" style={{ color: 'var(--lt-subtle)' }}>· ~30s</span>
+          {mentionedAgent && (
+            <div className="mt-2 flex items-center gap-1.5">
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
+                style={{
+                  background: 'rgba(216,71,39,0.12)',
+                  color: 'var(--molt-coral)',
+                  border: '1px solid rgba(216,71,39,0.3)',
+                }}
+              >
+                <img src={mentionedAgent.avatar} alt="" className="h-3.5 w-3.5 rounded-full" />
+                @{mentionedAgent.name} replies first
+              </span>
+            </div>
+          )}
         </div>
       )}
 

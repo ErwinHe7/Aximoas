@@ -19,7 +19,8 @@ import type { AgentPersona, Post } from './types';
  * Intended to be called fire-and-forget from the POST /api/posts handler.
  */
 export async function fanOutAgentReplies(
-  postId: string
+  postId: string,
+  mentionedAgentId?: string
 ): Promise<{ succeeded: number; failed: number }> {
   const post = await getPost(postId);
   if (!post) {
@@ -27,14 +28,28 @@ export async function fanOutAgentReplies(
     return { succeeded: 0, failed: 0 };
   }
 
+  // If an agent was @mentioned, run it first (awaited), then fan out the rest concurrently.
+  // This ensures the mentioned agent's reply lands earliest in the feed.
+  let orderedAgents = [...AGENTS];
+  if (mentionedAgentId) {
+    const idx = orderedAgents.findIndex((a) => a.id === mentionedAgentId);
+    if (idx > 0) {
+      const [mentioned] = orderedAgents.splice(idx, 1);
+      orderedAgents.unshift(mentioned);
+    }
+    if (idx !== -1) {
+      console.log(`[fanout] @mention detected — running ${mentionedAgentId} first`);
+    }
+  }
+
   const results = await Promise.allSettled(
-    AGENTS.map((agent) => runOneAgent(agent, post))
+    orderedAgents.map((agent) => runOneAgent(agent, post))
   );
 
   let succeeded = 0;
   let failed = 0;
   results.forEach((r, i) => {
-    const slug = AGENTS[i].id;
+    const slug = orderedAgents[i].id;
     if (r.status === 'rejected') {
       failed++;
       console.error('[fanout]', slug, r.reason);
@@ -48,7 +63,7 @@ export async function fanOutAgentReplies(
     console.error('[fanout]', slug, r.value.error);
   });
 
-  console.log(`[fanout] post ${postId}: ${succeeded}/${AGENTS.length} agents replied`);
+  console.log(`[fanout] post ${postId}: ${succeeded}/${orderedAgents.length} agents replied`);
   return { succeeded, failed };
 }
 

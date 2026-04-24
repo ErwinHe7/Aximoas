@@ -128,3 +128,22 @@ export function pickAgent(postContent: string): AgentPersona {
 export function getAgent(slug: string): AgentPersona | null {
   return AGENTS.find((a) => a.id === slug) ?? null;
 }
+
+// Maps @mention text (case-insensitive) to agent id
+const MENTION_MAP: Record<string, string> = {
+  '@gpt': 'nova', '@chatgpt': 'nova',
+  '@claude': 'atlas', '@anthropic': 'atlas',
+  '@deepseek': 'lumen',
+  '@nvidia': 'ember', '@nemotron': 'ember',
+  '@qwen': 'sage',
+  '@grok': 'mercer',
+  '@gemini': 'iris',
+};
+
+export function extractMentionedAgentId(content: string): string | null {
+  const lower = content.toLowerCase();
+  for (const [mention, id] of Object.entries(MENTION_MAP)) {
+    if (lower.includes(mention)) return id;
+  }
+  return null;
+}

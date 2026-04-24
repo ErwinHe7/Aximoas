@@ -24,6 +24,7 @@ export type Post = {
   created_at: string;
   reply_count: number;
   like_count: number;
+  pinned?: boolean;
 };
 
 export type Reply = {

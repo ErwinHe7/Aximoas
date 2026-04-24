@@ -1,6 +1,6 @@
 'use client';
 
-import { Heart, MessageCircle, Share2, Check, Sparkles, MessageSquarePlus, Repeat2 } from 'lucide-react';
+import { Heart, MessageCircle, Share2, Check, Sparkles, MessageSquarePlus, Repeat2, Trash2, Pin } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useTransition, useRef } from 'react';
 import { motion, useMotionValue, useTransform, useReducedMotion } from 'framer-motion';
@@ -20,7 +20,7 @@ function resolveAgentName(reply: Reply): string {
   return reply.author_name;
 }
 
-export function PostCard({ post, replies }: { post: Post; replies: Reply[] }) {
+export function PostCard({ post, replies, canDelete, canPin }: { post: Post; replies: Reply[]; canDelete?: boolean; canPin?: boolean }) {
   const [likes, setLikes] = useState(post.like_count);
   const [liked, setLiked] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -28,6 +28,8 @@ export function PostCard({ post, replies }: { post: Post; replies: Reply[] }) {
   const [showAgentReplies, setShowAgentReplies] = useState(false);
   const [showComposer, setShowComposer] = useState(false);
   const [localReplies, setLocalReplies] = useState<Reply[]>([]);
+  const [deleted, setDeleted] = useState(false);
+  const [pinned, setPinned] = useState(post.pinned ?? false);
   const [, start] = useTransition();
 
   const prefersReduced = useReducedMotion();
@@ -68,6 +70,19 @@ export function PostCard({ post, replies }: { post: Post; replies: Reply[] }) {
     });
   }
 
+  async function handleDelete() {
+    if (!confirm('Delete this post?')) return;
+    await fetch(`/api/posts/${post.id}`, { method: 'DELETE' });
+    setDeleted(true);
+  }
+
+  async function handlePin() {
+    await fetch(`/api/posts/${post.id}/pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ pin: !pinned }) });
+    setPinned((v) => !v);
+  }
+
+  if (deleted) return null;
+
   const text = post.content ?? '';
   const isLong = text.length > POST_CLAMP_CHARS;
   const display = expanded || !isLong ? text : text.slice(0, POST_CLAMP_CHARS).trimEnd() + '…';
@@ -103,6 +118,28 @@ export function PostCard({ post, replies }: { post: Post; replies: Reply[] }) {
           <div className="flex items-baseline gap-2">
             <span className="text-[15px] font-semibold" style={{ color: 'var(--lt-text)' }}>{post.author_name}</span>
             <span className="text-xs" style={{ color: 'var(--lt-subtle)' }}>· {timeAgo(post.created_at)}</span>
+            <div className="ml-auto flex items-center gap-1">
+              {canPin && (
+                <button
+                  onClick={handlePin}
+                  title={pinned ? 'Unpin from trending' : 'Pin to trending'}
+                  className="rounded-lg p-1 transition hover:bg-amber-50"
+                  style={{ color: pinned ? 'var(--molt-shell)' : 'var(--lt-subtle)' }}
+                >
+                  <Pin className="h-3.5 w-3.5" />
+                </button>
+              )}
+              {canDelete && (
+                <button
+                  onClick={handleDelete}
+                  title="Delete post"
+                  className="rounded-lg p-1 transition hover:bg-rose-50 hover:text-rose-600"
+                  style={{ color: 'var(--lt-subtle)' }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
           </div>
           <p className="mt-1.5 whitespace-pre-wrap text-[15.5px] leading-[1.65]" style={{ color: 'var(--lt-text)' }}>
             {display}
@@ -115,7 +152,7 @@ export function PostCard({ post, replies }: { post: Post; replies: Reply[] }) {
           {imgs.length > 0 && (
             <div className={`mt-3 grid gap-1.5 ${gridClass}`}>
               {imgs.map((src, i) => (
-                <img key={i} src={src} alt="" className={`w-full rounded-xl object-cover ${imgs.length === 1 ? 'max-h-96' : 'h-44'}`} style={{ border: '1px solid var(--lt-border)' }} />
+                <img key={i} src={src} alt="" className="w-full rounded-xl object-contain" style={{ border: '1px solid var(--lt-border)', maxHeight: imgs.length === 1 ? '520px' : '280px', background: 'rgba(0,0,0,0.03)' }} />
               ))}
             </div>
           )}

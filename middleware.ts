@@ -40,7 +40,9 @@ export async function middleware(req: NextRequest) {
 
   // Guest cookie — only set if missing. One year.
   if (!req.cookies.get(GUEST_COOKIE)?.value) {
-    const guestId = 'guest-' + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2));
+    const raw = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 10);
+    const hex = raw.replace(/-/g, '').toUpperCase().slice(0, 8);
+    const guestId = `AXIO-${hex}`;
     res.cookies.set(GUEST_COOKIE, guestId, {
       httpOnly: false,
       path: '/',
