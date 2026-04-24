@@ -136,7 +136,7 @@ export function PostComposer() {
     >
       <div className="flex items-start gap-3">
         <span className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[var(--molt-coral)]/30 text-sm font-black italic" style={{ fontFamily: 'var(--font-fraunces)', color: 'var(--molt-sand)' }}>
-          A7
+          AX7
         </span>
         <div className="flex-1 min-w-0">
           <input
@@ -246,7 +246,7 @@ export function PostComposer() {
               onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
               onDragLeave={() => setDragOver(false)}
               className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs transition disabled:opacity-50`}
-              style={{ color: dragOver ? 'var(--lt-text)' : 'rgba(247,240,232,0.4)' }}
+              style={{ color: dragOver ? 'var(--molt-shell)' : 'var(--lt-muted)' }}
             >
               {uploading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />}
               {uploading ? 'Uploading…' : 'Photo'}
