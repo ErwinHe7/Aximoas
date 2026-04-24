@@ -58,6 +58,16 @@ export function HeroSection({ lastPostTime, user }: { lastPostTime?: string; use
       {/* ── Left-side text content ── */}
       <motion.div className="relative z-10 max-w-xl" style={{ y: yParallax }}>
 
+        {/* AXIO7 logo embedded above headline */}
+        <motion.img
+          src="/logo.png"
+          alt="AXIO7"
+          initial={{ opacity: 0, y: prefersReduced ? 0 : -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, ease: 'easeOut' }}
+          className="mb-6 h-16 w-auto sm:h-20 lg:h-24"
+        />
+
         <p className="mb-5 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--molt-coral)' }}>
           columbia · nyc · est. 2026
         </p>
