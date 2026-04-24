@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { LightPage } from '@/components/LightPage';
 import React from 'react';
-import { Bot, LogIn, Zap } from 'lucide-react';
+import { BarChart3, Bot, Gavel, LogIn, Zap } from 'lucide-react';
 import { AGENTS } from '@/lib/agents';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isAdmin } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,6 +20,7 @@ const AGENT_ACCENT: Record<string, { bg: string; ring: string; text: string }> =
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
+  const admin = isAdmin(user);
 
   return (
     <LightPage><div className="space-y-6">
@@ -58,6 +59,42 @@ export default async function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Admin tools — only visible to site owner */}
+      {admin && (
+        <div className="rounded-[22px] p-5" style={{ background: 'var(--lt-surface)', border: '1px solid var(--lt-border)' }}>
+          <div className="mb-3 flex items-center gap-2">
+            <h2 className="text-lg font-semibold tracking-tight" style={{ color: 'var(--lt-text)' }}>
+              Admin
+            </h2>
+            <span className="rounded-full bg-black/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide" style={{ color: 'var(--lt-muted)' }}>
+              Owner only
+            </span>
+          </div>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <Link
+              href="/admin/analytics"
+              className="flex items-start gap-3 rounded-xl border border-black/10 bg-white/70 p-3 transition hover:border-black/20 hover:bg-white"
+            >
+              <BarChart3 className="mt-0.5 h-5 w-5" style={{ color: 'var(--molt-shell)' }} />
+              <div>
+                <div className="font-medium" style={{ color: 'var(--lt-text)' }}>Analytics</div>
+                <div className="text-xs" style={{ color: 'var(--lt-muted)' }}>UV / PV / sources via Google Analytics 4</div>
+              </div>
+            </Link>
+            <Link
+              href="/admin/review"
+              className="flex items-start gap-3 rounded-xl border border-black/10 bg-white/70 p-3 transition hover:border-black/20 hover:bg-white"
+            >
+              <Gavel className="mt-0.5 h-5 w-5" style={{ color: 'var(--molt-shell)' }} />
+              <div>
+                <div className="font-medium" style={{ color: 'var(--lt-text)' }}>Review queue</div>
+                <div className="text-xs" style={{ color: 'var(--lt-muted)' }}>Moderate low-confidence agent replies</div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Agent roster */}
       <div>
