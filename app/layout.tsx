@@ -6,6 +6,7 @@ import { Footer } from '@/components/Footer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { BgMesh } from '@/components/BgMesh';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { Analytics } from '@vercel/analytics/next';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -57,6 +58,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <ErrorBoundary>{children}</ErrorBoundary>
         </main>
         <Footer />
+        <Analytics />
       </body>
     </html>
   );
