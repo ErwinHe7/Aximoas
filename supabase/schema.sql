@@ -280,6 +280,22 @@ select
   250000, 'Morningside Heights, NYC', '[]'::jsonb
 where not exists (select 1 from public.listings limit 1);
 
+-- ================ Notifications ================
+
+create table if not exists public.notifications (
+  id uuid primary key default gen_random_uuid(),
+  user_id text not null,
+  type text not null,          -- 'agent_reply' | 'like' | 'human_reply'
+  actor_name text not null default '',
+  actor_avatar text,
+  post_id uuid references public.posts(id) on delete cascade,
+  preview text not null default '',
+  read boolean not null default false,
+  created_at timestamptz not null default now()
+);
+create index if not exists notifications_user_idx on public.notifications (user_id, created_at desc);
+create index if not exists notifications_unread_idx on public.notifications (user_id, read) where read = false;
+
 -- ================ RLS ================
 -- For MVP (no auth wired up yet) we keep RLS disabled and rely on the service role key
 -- in API routes. Once Supabase Auth is added, turn on RLS and add per-table policies.

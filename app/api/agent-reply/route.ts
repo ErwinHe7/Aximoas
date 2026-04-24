@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { createReply, getPost } from '@/lib/store';
+import { createReply, getPost, createNotification } from '@/lib/store';
 import { pickAgent } from '@/lib/agents';
 import { runAgentGraph } from '@/lib/agent-graph'; // LangGraph pipeline
 
@@ -20,6 +20,17 @@ export async function POST(req: Request) {
 
   try {
     const reply = await runAgentGraph(post.id); // uses LangGraph StateGraph
+    // Notify post author (skip if author is a guest/anon)
+    if (post.author_id && !post.author_id.startsWith('guest-') && post.author_id !== 'aximoas-seed') {
+      createNotification({
+        user_id: post.author_id,
+        type: 'agent_reply',
+        actor_name: reply.author_name,
+        actor_avatar: reply.author_avatar ?? null,
+        post_id: post.id,
+        preview: reply.content.slice(0, 100),
+      }).catch(() => {}); // fire-and-forget
+    }
     return NextResponse.json({ reply });
   } catch (err: any) {
     // Graceful fallback: create a visible placeholder so the user sees *something*

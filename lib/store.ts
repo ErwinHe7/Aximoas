@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 import { isSupabaseConfigured, supabaseAdmin } from './supabase';
-import type { Bid, Listing, Post, Reply, AgentReplyMeta, Reaction, Transaction, Message, AgentProfileRow } from './types';
+import type { Bid, Listing, Post, Reply, AgentReplyMeta, Reaction, Transaction, Message, AgentProfileRow, Notification, NotificationType } from './types';
 
 // Dual-mode store.
 // - If Supabase env vars are set → all reads/writes hit Supabase (persists on Vercel serverless).
@@ -704,6 +704,83 @@ export async function listMessages(transactionId: string): Promise<Message[]> {
     return (data ?? []).map(mapMessage);
   }
   return mem().messages.filter((m) => m.transaction_id === transactionId);
+}
+
+// ================ Notifications ================
+
+function mapNotification(row: any): Notification {
+  return {
+    id: row.id,
+    user_id: row.user_id,
+    type: row.type as NotificationType,
+    actor_name: row.actor_name ?? '',
+    actor_avatar: row.actor_avatar ?? null,
+    post_id: row.post_id ?? null,
+    preview: row.preview ?? '',
+    read: row.read ?? false,
+    created_at: row.created_at,
+  };
+}
+
+export async function createNotification(input: {
+  user_id: string;
+  type: NotificationType;
+  actor_name: string;
+  actor_avatar?: string | null;
+  post_id?: string | null;
+  preview: string;
+}): Promise<void> {
+  if (!usingDB()) return; // no-op in demo mode
+  await supabaseAdmin()
+    .from('notifications')
+    .insert({
+      user_id: input.user_id,
+      type: input.type,
+      actor_name: input.actor_name,
+      actor_avatar: input.actor_avatar ?? null,
+      post_id: input.post_id ?? null,
+      preview: input.preview,
+    });
+}
+
+export async function listNotifications(userId: string, limit = 20): Promise<Notification[]> {
+  if (!usingDB()) return [];
+  const { data, error } = await supabaseAdmin()
+    .from('notifications')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) return [];
+  return (data ?? []).map(mapNotification);
+}
+
+export async function getUnreadCount(userId: string): Promise<number> {
+  if (!usingDB()) return 0;
+  const { count, error } = await supabaseAdmin()
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', userId)
+    .eq('read', false);
+  if (error) return 0;
+  return count ?? 0;
+}
+
+export async function markNotificationRead(notificationId: string): Promise<void> {
+  if (!usingDB()) return;
+  await supabaseAdmin()
+    .from('notifications')
+    .update({ read: true })
+    .eq('id', notificationId);
+}
+
+export async function markAllNotificationsRead(userId: string): Promise<void> {
+  if (!usingDB()) return;
+  await supabaseAdmin()
+    .from('notifications')
+    .update({ read: true })
+    .eq('user_id', userId)
+    .eq('read', false);
 }
 
 export async function createMessage(input: {

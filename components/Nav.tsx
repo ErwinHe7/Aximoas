@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { Home, ShoppingBag, User, LogIn, LogOut, Info, Network } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
+import { BellButton } from './BellButton';
 
 export async function Nav() {
   const user = await getCurrentUser();
@@ -33,6 +34,8 @@ export async function Nav() {
           <NavLink href="/about"      icon={<Info className="h-4 w-4" />}    label="About"     />
           <NavLink href="/subagents"  icon={<Network className="h-4 w-4" />} label="Subagents" />
           <NavLink href="/profile"    icon={<User className="h-4 w-4" />}    label="Profile"   />
+
+          <BellButton authenticated={user.authenticated} />
 
           {user.authenticated ? (
             <UserChip user={user} />

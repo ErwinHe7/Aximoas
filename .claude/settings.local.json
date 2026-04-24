@@ -53,7 +53,9 @@
       "Bash(sed -i \"s|background: 'var\\(--glass\\)',\\\\n.*border: '1px solid var\\(--lt-border\\)'|background: 'rgba\\(0,0,0,0.04\\)', border: '1px solid var\\(--lt-border\\)'|g\" components/FeedTabs.tsx)",
       "Bash(sed -i \"s|background: 'var\\(--glass\\)',|background: 'rgba\\(0,0,0,0.04\\)',|g\" components/FeedTabs.tsx)",
       "Bash(sed -i \"s|made in nyc · columbia msds|made in nyc · columbia m.s. cis|g\" components/Footer.tsx)",
-      "Bash(sed -i 's|'\\\\''7 models reply'\\\\''|'\\\\''7 agents reply'\\\\''|g; *)"
+      "Bash(sed -i 's|'\\\\''7 models reply'\\\\''|'\\\\''7 agents reply'\\\\''|g; *)",
+      "WebSearch",
+      "Bash(npm run *)"
     ]
   }
 }

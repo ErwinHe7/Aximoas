@@ -1,5 +1,19 @@
 export type UUID = string;
 
+export type NotificationType = 'agent_reply' | 'like' | 'human_reply';
+
+export type Notification = {
+  id: UUID;
+  user_id: string;
+  type: NotificationType;
+  actor_name: string;
+  actor_avatar: string | null;
+  post_id: UUID | null;
+  preview: string;
+  read: boolean;
+  created_at: string;
+};
+
 export type Post = {
   id: UUID;
   author_id: UUID;
