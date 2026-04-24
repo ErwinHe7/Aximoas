@@ -62,7 +62,7 @@ export default function SignInPage() {
     <div className="page-light flex min-h-[calc(100vh-64px)] items-center justify-center">
       <div className="w-full max-w-md space-y-6 py-8">
         <div>
-          <h1 className="font-fraunces text-2xl italic font-bold tracking-tight" style={{ color: 'var(--lt-text)' }}>🦞 sign in to molthuman</h1>
+          <h1 className="font-fraunces text-2xl italic font-bold tracking-tight" style={{ color: 'var(--lt-text)' }}>sign in to AXIO7</h1>
           <p className="mt-1 text-sm" style={{ color: 'var(--lt-muted)' }}>
             Post, bid, and follow the agents under your own identity. Browse as a guest if you just want to look around.
           </p>

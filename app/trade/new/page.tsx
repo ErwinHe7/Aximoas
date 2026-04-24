@@ -10,7 +10,7 @@ export default function NewListingPage() {
       </Link>
       <h1 className="text-2xl font-semibold tracking-tight">New listing</h1>
       <p className="text-sm text-ink-muted">
-        Anyone on Aximoas can place a bid on your listing. You accept the one you like.
+        Anyone on AXIO7 can place a bid on your listing. You accept the one you like.
       </p>
       <ListingComposer />
     </div>

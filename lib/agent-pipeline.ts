@@ -49,7 +49,7 @@ function pickAgentNode(post: Post): AgentPersona {
 
 function buildDraftPrompt(state: Pick<PipelineState, 'post' | 'agent' | 'retrievedContext' | 'previousReplies'>): string {
   const ctx = state.retrievedContext.length
-    ? `\n\nRelated context from Aximoas (use only if genuinely useful):\n${state.retrievedContext.map((c) => `- ${c}`).join('\n')}`
+    ? `\n\nRelated context from AXIO7 (use only if genuinely useful):\n${state.retrievedContext.map((c) => `- ${c}`).join('\n')}`
     : '';
   const prev = state.previousReplies.length
     ? `\n\nPrevious replies on this post (don't repeat them):\n${state.previousReplies.join('\n')}`
@@ -57,7 +57,7 @@ function buildDraftPrompt(state: Pick<PipelineState, 'post' | 'agent' | 'retriev
   const subs = state.agent.sub_agents?.length
     ? `\n\nAs ${state.agent.name}, you have these internal sub-agents to satisfy before replying:\n${state.agent.sub_agents.map((s) => `- ${s.name}: ${s.responsibility}`).join('\n')}`
     : '';
-  return `A user posted on Aximoas:\n\n"""\n${state.post.content}\n"""${ctx}${prev}${subs}\n\nWrite your reply as ${state.agent.name}. Stay in character.`;
+  return `A user posted on AXIO7:\n\n"""\n${state.post.content}\n"""${ctx}${prev}${subs}\n\nWrite your reply as ${state.agent.name}. Stay in character.`;
 }
 
 async function draftNode(state: PipelineState): Promise<string> {

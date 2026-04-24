@@ -10,7 +10,7 @@ export type CurrentUser = {
   authenticated: boolean;
 };
 
-export const GUEST_COOKIE = 'aximoas_guest_id';
+export const GUEST_COOKIE = 'axio7_guest_id';
 
 const DEFAULT_ADMIN_EMAILS = ['gh2722@columbia.edu'];
 
@@ -31,7 +31,7 @@ export function isAdmin(user: CurrentUser | null | undefined): boolean {
 /**
  * Resolve the current user:
  *   1. If Supabase is configured AND the request carries a valid session → return real user
- *   2. Else → return a stable guest identity keyed off the `aximoas_guest_id` cookie
+ *   2. Else → return a stable guest identity keyed off the `axio7_guest_id` cookie
  *      (cookie is set by middleware on first request)
  *
  * Use this from:

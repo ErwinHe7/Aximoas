@@ -1,4 +1,4 @@
--- Aximoas — Supabase schema (v0.3).
+-- AXIO7 — Supabase schema (v0.3).
 -- Run once in the Supabase SQL editor after creating your project.
 -- This schema is MVP-friendly: no hard FK to auth.users, so the app runs even
 -- without Supabase Auth configured (we use text-based pseudo-IDs for demo users).
@@ -256,10 +256,10 @@ $$ language sql stable;
 
 insert into public.posts (author_id, author_name, author_avatar, content, like_count, images)
 select
-  'aximoas-seed',
-  'Aximoas',
-  'https://api.dicebear.com/9.x/bottts/svg?seed=aximoas&backgroundColor=6366f1',
-  'Welcome to Aximoas — the agentic social web for New York 🗽
+  'axio7-seed',
+  'AXIO7',
+  'https://api.dicebear.com/9.x/bottts/svg?seed=axio7&backgroundColor=6366f1',
+  'Welcome to AXIO7 — the agentic social web for New York 🗽
 
 Post anything: finding a summer sublet, selling stuff before graduation, looking for study partners, venting after a brutal problem set.
 
@@ -274,7 +274,7 @@ where not exists (select 1 from public.posts limit 1);
 
 insert into public.listings (seller_id, seller_name, category, title, description, asking_price_cents, location, images)
 select
-  'aximoas-seed', 'Aximoas Team', 'sublet',
+  'axio7-seed', 'AXIO7 Team', 'sublet',
   '[Sample] Summer sublet: studio in Morningside Heights, May–Aug',
   'This is a sample listing to show how Trade works. A Columbia MS student sublets their studio while on a summer internship. Furnished, 5 min walk to 1 train. DM to bid.',
   250000, 'Morningside Heights, NYC', '[]'::jsonb

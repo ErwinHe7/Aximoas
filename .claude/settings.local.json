@@ -55,7 +55,28 @@
       "Bash(sed -i \"s|made in nyc · columbia msds|made in nyc · columbia m.s. cis|g\" components/Footer.tsx)",
       "Bash(sed -i 's|'\\\\''7 models reply'\\\\''|'\\\\''7 agents reply'\\\\''|g; *)",
       "WebSearch",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "Bash(git -C .claude/worktrees/agent-a9f23676 diff HEAD --name-only)",
+      "Bash(git -C .claude/worktrees/agent-abee058f diff HEAD --name-only)",
+      "Bash(git -C .claude/worktrees/agent-a9d94d39 diff HEAD --name-only)",
+      "Bash(git -C .claude/worktrees/agent-aa8ab5f8 diff HEAD --name-only)",
+      "Bash(git -C .claude/worktrees/agent-a9f23676 log --oneline HEAD...419b8d1)",
+      "Bash(git -C .claude/worktrees/agent-abee058f log --oneline HEAD...419b8d1)",
+      "Bash(git -C .claude/worktrees/agent-a9d94d39 log --oneline HEAD...419b8d1)",
+      "Bash(git -C .claude/worktrees/agent-aa8ab5f8 log --oneline HEAD...419b8d1)",
+      "Bash(git -C .claude/worktrees/agent-a9f23676 status --short)",
+      "Bash(git -C .claude/worktrees/agent-abee058f status --short)",
+      "Bash(git -C .claude/worktrees/agent-a9d94d39 status --short)",
+      "Bash(git -C .claude/worktrees/agent-aa8ab5f8 status --short)",
+      "Bash(git -C .claude/worktrees/agent-a9f23676 status)",
+      "Bash(git -C .claude/worktrees/agent-abee058f status)",
+      "Bash(git -C .claude/worktrees/agent-a9d94d39 status)",
+      "Bash(git -C .claude/worktrees/agent-aa8ab5f8 status)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git diff *)",
+      "Bash(git rebase *)",
+      "Bash(GIT_EDITOR=true git rebase --continue)"
     ]
   }
 }

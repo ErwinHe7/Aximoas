@@ -10,26 +10,28 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const post = await getPost(params.id).catch(() => null);
-  if (!post) return { title: 'Post not found — Aximoas' };
+  if (!post) return { title: 'Post not found — AXIO7' };
 
   const excerpt = post.content.slice(0, 160);
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://aximoas.vercel.app';
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://axio7.com';
+
   const ogImage = post.images?.[0] ?? `${siteUrl}/og-default.png`;
 
   return {
-    title: `${post.author_name} on Aximoas`,
+    title: `${post.author_name} on AXIO7`,
     description: excerpt,
     openGraph: {
-      title: `${post.author_name} on Aximoas`,
+      title: `${post.author_name} on AXIO7`,
       description: excerpt,
       url: `${siteUrl}/post/${post.id}`,
-      siteName: 'Aximoas',
+      siteName: 'AXIO7',
       images: [{ url: ogImage, width: 1200, height: 630 }],
       type: 'article',
     },
     twitter: {
       card: 'summary_large_image',
-      title: `${post.author_name} on Aximoas`,
+      title: `${post.author_name} on AXIO7`,
       description: excerpt,
       images: [ogImage],
     },

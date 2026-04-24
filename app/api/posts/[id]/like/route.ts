@@ -11,7 +11,7 @@ export async function POST(_req: Request, { params }: { params: { id: string } }
     // Notify post author — skip self-likes and guests
     if (user.authenticated) {
       const post = await getPost(params.id);
-      if (post && post.author_id !== user.id && !post.author_id.startsWith('guest-') && post.author_id !== 'aximoas-seed') {
+      if (post && post.author_id !== user.id && !post.author_id.startsWith('guest-') && post.author_id !== 'axio7-seed') {
         createNotification({
           user_id: post.author_id,
           type: 'like',

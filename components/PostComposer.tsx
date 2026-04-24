@@ -131,8 +131,8 @@ export function PostComposer() {
       }}
     >
       <div className="flex items-start gap-3">
-        <span className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[var(--molt-coral)]/30 text-xl">
-          🦞
+        <span className="inline-flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[var(--molt-coral)]/30 text-sm font-black italic" style={{ fontFamily: 'var(--font-fraunces)', color: 'var(--molt-sand)' }}>
+          A7
         </span>
         <div className="flex-1 min-w-0">
           <input

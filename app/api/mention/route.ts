@@ -46,7 +46,7 @@ async function mercerWithListings(post_id: string, userComment: string, post_con
   }).slice(0, 4);
 
   const listingContext = relevant.length > 0
-    ? `\n\nActive listings on Molthuman right now:\n${relevant.map((l) =>
+    ? `\n\nActive listings on AXIO7 right now:\n${relevant.map((l) =>
         `- "${l.title}" by ${l.seller_name} · ${formatCents(l.asking_price_cents, l.currency)}${l.location ? ` · ${l.location}` : ''} · ${l.bid_count} bids · /trade/${l.id}`
       ).join('\n')}`
     : '\n\n(No matching listings currently open on the platform.)';

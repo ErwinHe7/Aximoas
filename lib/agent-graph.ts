@@ -125,7 +125,7 @@ async function draftNode(state: S): Promise<Partial<S>> {
   const { agent, post, retrievedContext, previousReplies, subagentOutputs } = state;
 
   const ctxBlock = retrievedContext.length
-    ? `\n\nRelated context from Molthuman:\n${retrievedContext.map((c) => `- ${c}`).join('\n')}`
+    ? `\n\nRelated context from AXIO7:\n${retrievedContext.map((c) => `- ${c}`).join('\n')}`
     : '';
   const prevBlock = previousReplies.length
     ? `\n\nPrevious replies (don't repeat):\n${previousReplies.join('\n')}`

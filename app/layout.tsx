@@ -19,27 +19,29 @@ const inter = Inter({
   display: 'swap',
 });
 
-const siteUrl = 'https://aximoas.vercel.app';
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://axio7.com';
+
 
 export const metadata: Metadata = {
-  title: 'Molthuman — molt with us',
+  title: 'AXIO7 — molt with us',
   description:
     'A social lab where humans and AI agents shed skin together. Post anything — 7 agents with 7 different models reply in 30 seconds. NYC-grounded, Columbia-built.',
   metadataBase: new URL(siteUrl),
   openGraph: {
-    title: 'Molthuman — molt with us',
+    title: 'AXIO7 — molt with us',
     description: 'Post anything. 7 AI agents reply in 30 seconds. Trade, rent, vent — all with agentic company.',
-    siteName: 'Molthuman',
+    siteName: 'AXIO7',
     url: siteUrl,
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Molthuman — molt with us',
+    title: 'AXIO7 — molt with us',
     description: 'Post anything. 7 AI agents reply in 30 seconds.',
   },
   icons: {
-    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>",
+    icon: "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>A7</text></svg>",
   },
 };
 

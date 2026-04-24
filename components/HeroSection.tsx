@@ -30,34 +30,6 @@ export function HeroSection({ lastPostTime, user }: { lastPostTime?: string; use
     <section className="relative -mx-4 flex min-h-[calc(100vh-64px)] flex-col items-start justify-center overflow-hidden px-8 py-16 sm:px-12"
       style={{ background: 'var(--bg-deep)' }}
     >
-      {/* Floating lobster */}
-      <div
-        className="absolute right-6 top-8 opacity-80 sm:right-12 sm:top-10"
-        style={{ animation: prefersReduced ? 'none' : 'float 4s ease-in-out infinite' }}
-      >
-        <svg width="120" height="120" viewBox="0 0 120 120" fill="none" aria-hidden="true">
-          <ellipse cx="60" cy="68" rx="19" ry="27" fill="#D84727"/>
-          <ellipse cx="60" cy="40" rx="14" ry="12" fill="#D84727"/>
-          <circle cx="53" cy="33" r="3.5" fill="#F7F0E8"/><circle cx="67" cy="33" r="3.5" fill="#F7F0E8"/>
-          <circle cx="53.5" cy="33.5" r="2" fill="#0B4F6C"/><circle cx="67.5" cy="33.5" r="2" fill="#0B4F6C"/>
-          <line x1="53" y1="30" x2="30" y2="10" stroke="#F9B5A4" strokeWidth="2.5" strokeLinecap="round"/>
-          <line x1="67" y1="30" x2="90" y2="10" stroke="#F9B5A4" strokeWidth="2.5" strokeLinecap="round"/>
-          <path d="M40 56 C27 49 21 63 33 67 C39 69 44 64 40 56Z" fill="#B83A1F"/>
-          <path d="M80 56 C93 49 99 63 87 67 C81 69 76 64 80 56Z" fill="#B83A1F"/>
-          <line x1="46" y1="63" x2="31" y2="74" stroke="#B83A1F" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="44" y1="71" x2="29" y2="82" stroke="#B83A1F" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="74" y1="63" x2="89" y2="74" stroke="#B83A1F" strokeWidth="3" strokeLinecap="round"/>
-          <line x1="76" y1="71" x2="91" y2="82" stroke="#B83A1F" strokeWidth="3" strokeLinecap="round"/>
-          <ellipse cx="60" cy="92" rx="15" ry="6.5" fill="#B83A1F"/>
-          <ellipse cx="60" cy="101" rx="11" ry="5.5" fill="#A03219"/>
-          <path d="M49 105 C44 114 38 118 32 116" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-          <path d="M55 107 C53 116 51 120 46 119" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-          <path d="M60 108 C60 117 60 120 60 120" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-          <path d="M65 107 C67 116 69 120 74 119" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-          <path d="M71 105 C76 114 82 118 88 116" stroke="#B83A1F" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
-        </svg>
-      </div>
-
       {/* Parallax content wrapper */}
       <motion.div className="relative z-10 max-w-2xl" style={{ y: yParallax }}>
         <p className="mb-5 text-xs font-semibold uppercase tracking-widest" style={{ color: 'var(--molt-coral)' }}>
@@ -128,7 +100,7 @@ export function HeroSection({ lastPostTime, user }: { lastPostTime?: string; use
                 className="inline-flex items-center gap-2 rounded-[22px] px-6 py-3 text-sm font-semibold text-white shadow-lg transition hover:opacity-90 active:scale-95"
                 style={{ background: 'var(--molt-shell)' }}
               >
-                🦞 Join with Google
+                Join with Google
               </Link>
               <a
                 href="#feed"

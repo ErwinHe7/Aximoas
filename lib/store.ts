@@ -20,7 +20,7 @@ type DB = {
   review_queue: { id: string; reply_id: string; reason: string; status: 'open' | 'approved' | 'rejected'; created_at: string }[];
 };
 
-const g = globalThis as unknown as { __aximoas_db?: DB };
+const g = globalThis as unknown as { __axio7_db?: DB };
 
 function seed(): DB {
   const seedUser = {
@@ -133,8 +133,8 @@ function seed(): DB {
 }
 
 function mem(): DB {
-  if (!g.__aximoas_db) g.__aximoas_db = seed();
-  return g.__aximoas_db;
+  if (!g.__axio7_db) g.__axio7_db = seed();
+  return g.__axio7_db;
 }
 
 function usingDB(): boolean {

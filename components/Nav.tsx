@@ -16,7 +16,6 @@ export async function Nav() {
     >
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
         <Link href="/" className="flex items-center gap-1.5 text-[1.1rem] font-semibold tracking-tight">
-          <span className="text-xl leading-none">🦞</span>
           <span
             className="font-fraunces italic"
             style={{
@@ -24,7 +23,7 @@ export async function Nav() {
               textShadow: '0 0 24px var(--glow-shell)',
             }}
           >
-            molthuman
+            <span>AXIO<span style={{fontSize:'1.2em', fontWeight:900}}>7</span></span>
           </span>
         </Link>
 

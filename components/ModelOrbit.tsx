@@ -19,19 +19,23 @@ export function ModelOrbit() {
             animation: 'orbit-spin 30s linear infinite',
           }}
         />
-        {/* Center lobster */}
+        {/* Center A7 */}
         <div
           style={{
             position: 'absolute',
             top: '50%',
             left: '50%',
             transform: 'translate(-50%, -50%)',
-            fontSize: '2.5rem',
+            fontSize: '1.4rem',
+            fontWeight: 900,
+            fontFamily: 'var(--font-fraunces)',
+            fontStyle: 'italic',
+            color: 'var(--molt-sand)',
             animation: 'float 4s ease-in-out infinite',
             zIndex: 10,
           }}
         >
-          🦞
+          A7
         </div>
         {/* Agent badges around the orbit */}
         {AGENTS.map((agent, i) => {

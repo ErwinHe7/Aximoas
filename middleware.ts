@@ -8,7 +8,7 @@ import { GUEST_COOKIE } from '@/lib/auth';
  *   1. If Supabase env vars are present, refresh the auth cookie by calling
  *      `supabase.auth.getUser()` — this is the documented pattern for keeping
  *      the session alive across server renders.
- *   2. Seed a stable guest cookie (`aximoas_guest_id`) for unauthenticated
+ *   2. Seed a stable guest cookie (`axio7_guest_id`) for unauthenticated
  *      users so writes (posts / bids) can still be attributed without forcing
  *      login. Guests can upgrade to real Supabase auth via /auth/signin.
  */

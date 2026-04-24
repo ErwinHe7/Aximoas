@@ -21,7 +21,7 @@ export async function POST(req: Request) {
   try {
     const reply = await runAgentGraph(post.id); // uses LangGraph StateGraph
     // Notify post author (skip if author is a guest/anon)
-    if (post.author_id && !post.author_id.startsWith('guest-') && post.author_id !== 'aximoas-seed') {
+    if (post.author_id && !post.author_id.startsWith('guest-') && post.author_id !== 'axio7-seed') {
       createNotification({
         user_id: post.author_id,
         type: 'agent_reply',

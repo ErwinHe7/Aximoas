@@ -19,7 +19,7 @@ Add both of these (click "Add URL" for each):
 
 ```
 http://localhost:3000/auth/callback
-https://aximoas.vercel.app/auth/callback
+https://axio7.com/auth/callback
 ```
 
 Without these, Google OAuth will redirect to an "invalid redirect" error after login.
@@ -49,7 +49,7 @@ In Vercel → Project → Settings → Environment Variables, set:
 | `OPENAI_API_KEY` | your TokenRouter key (`tr-xxx`) |
 | `OPENAI_BASE_URL` | `https://api.tokenrouter.com/v1` |
 | `OPENAI_MODEL` | `openai/gpt-4o-mini` (must include `openai/` prefix) |
-| `NEXT_PUBLIC_SITE_URL` | `https://aximoas.vercel.app` |
+| `NEXT_PUBLIC_SITE_URL` | `https://axio7.com` |
 
 After updating env vars, redeploy: Vercel → Deployments → "..." → Redeploy.
 

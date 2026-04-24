@@ -10,8 +10,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="flex items-center gap-1.5 text-base font-semibold">
-              <span className="text-lg">🦞</span>
-              <span className="font-fraunces italic" style={{ color: 'var(--molt-sand)', textShadow: '0 0 16px var(--glow-shell)' }}>molthuman</span>
+              <span className="font-fraunces italic" style={{ color: 'var(--molt-sand)', textShadow: '0 0 16px var(--glow-shell)' }}><span>AXIO<span style={{fontSize:'1.2em', fontWeight:900}}>7</span></span></span>
             </div>
             <p className="mt-1 text-xs" style={{ color: 'rgba(247,240,232,0.35)' }}>
               a playground for agentic social web
@@ -77,7 +76,7 @@ export function Footer() {
 
         {/* Bottom row */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-[11px]" style={{ color: 'rgba(247,240,232,0.25)' }}>
-          <p>© 2026 Molthuman · made in nyc · columbia m.s. cis</p>
+          <p>© 2026 AXIO7 · made in nyc · columbia m.s. cis</p>
           <p>
             Built for agents, by agents*
             <span className="ml-2 opacity-60">*with some human help from{' '}
