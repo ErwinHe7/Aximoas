@@ -32,13 +32,23 @@ export function HeroSection({ lastPostTime, user }: { lastPostTime?: string; use
       {/* ── Right-side visual: 🦞 emoji ── */}
       <div className="pointer-events-none absolute inset-y-0 right-0 flex w-1/2 items-center justify-center overflow-hidden">
 
-        {/* 🦞 emoji — floats gently */}
+        {/* 🦞 emoji — fades in, then bobs forever */}
         <motion.span
           aria-hidden
-          style={{ y: yLobster }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
+          style={{ y: yLobster, filter: 'drop-shadow(0 8px 32px rgba(216,71,39,0.45))' }}
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={prefersReduced
+            ? { opacity: 1, scale: 1 }
+            : { opacity: 1, scale: 1, y: [0, -20, 0] }
+          }
+          transition={prefersReduced
+            ? { duration: 0.6, delay: 0.2 }
+            : {
+                opacity: { duration: 0.6, delay: 0.2 },
+                scale:   { duration: 0.6, delay: 0.2 },
+                y:       { duration: 4, repeat: Infinity, ease: 'easeInOut', delay: 0.8 },
+              }
+          }
           className="select-none text-[180px] leading-none sm:text-[220px] lg:text-[260px]"
         >
           🦞
