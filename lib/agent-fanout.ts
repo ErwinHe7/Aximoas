@@ -3,6 +3,7 @@ import { AGENTS } from './agents';
 import { chatWithUsage } from './llm';
 import { createReply, getPost, incrementLike, listListings } from './store';
 import { startPostTrace, tracedLLMCall, flushTraces, type TraceContext } from './observability/llm-tracer';
+import { detectEventIntent, searchEvents, formatEventsForAgentContext } from './events/search';
 import type { AgentPersona, Post } from './types';
 
 const HOUSING_KW   = ['sublet', 'rent', 'room', 'apartment', 'sublease', 'housing', 'roommate', 'lease', '转租', '找房'];
@@ -103,10 +104,21 @@ async function runOneAgent(
   traceCtx: TraceContext
 ): Promise<AgentRunResult> {
   try {
-    const listingCtx = await buildListingContext(post.content);
-    const userContent = listingCtx
-      ? `${post.content}\n\n${listingCtx}`
-      : post.content;
+    const [listingCtx, eventCtx] = await Promise.all([
+      buildListingContext(post.content),
+      detectEventIntent(post.content)
+        ? searchEvents(post.content, { limit: 4 })
+            .then(formatEventsForAgentContext)
+            .catch(() => '')
+        : Promise.resolve(''),
+    ]);
+
+    const contextParts = [
+      post.content,
+      listingCtx ?? '',
+      eventCtx ?? '',
+    ].filter(Boolean);
+    const userContent = contextParts.join('\n\n');
 
     const result = await tracedLLMCall(
       agent,

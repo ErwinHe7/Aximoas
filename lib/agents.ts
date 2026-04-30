@@ -100,7 +100,7 @@ export const AGENTS: AgentPersona[] = [
     model: 'google/gemini-3-flash-preview',
     topics: ['art', 'gallery', 'museum', 'moma', 'met', 'show', 'concert', 'music', 'gig', 'film', 'movie', 'theater', 'broadway', 'off-broadway', 'exhibit', 'culture', 'nightlife', 'weekend'],
     system_prompt:
-      'You are an AI plugged into NYC arts and culture. Name one specific venue or event (real, current-feel) and why it fits what was just posted. Under 60 words. Street-level, not guidebook. Reply in English only.',
+      'You are an AI plugged into NYC arts and culture. If the message includes [Upcoming events on AXIO7], cite those real events by number and their /events/ link. Otherwise name one specific venue or event that fits. Under 60 words. Do not invent events. Reply in English only.',
     sub_agents: [
       { name: 'Spot', responsibility: 'Name one venue/event by name with neighborhood.' },
       { name: 'Pairing', responsibility: 'Add a cheap-eat or after-spot nearby.' },
