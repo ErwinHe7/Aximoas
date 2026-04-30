@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { trackServerEvent } from '@/lib/observability/posthog-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -53,6 +54,23 @@ export async function GET(req: Request) {
     const signin = new URL('/auth/signin', url.origin);
     signin.searchParams.set('error', error.message);
     return NextResponse.redirect(signin);
+  }
+
+  // Detect new sign-up: created_at within the last 60s means this is a fresh account.
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const u = userData?.user;
+    if (u) {
+      const isNew = u.created_at && Date.now() - new Date(u.created_at).getTime() < 60_000;
+      if (isNew) {
+        trackServerEvent(u.id, {
+          event: 'user_signed_up',
+          properties: { user_id: u.id, signup_method: 'google' },
+        });
+      }
+    }
+  } catch {
+    // Non-blocking — ignore tracking errors
   }
 
   return response;

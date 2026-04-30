@@ -1,5 +1,6 @@
 import { randomUUID } from 'crypto';
 import { isSupabaseConfigured, supabaseAdmin } from './supabase';
+import { normalizeAxioHandle } from './guest-identity';
 import type { Bid, Listing, Post, Reply, AgentReplyMeta, Reaction, Transaction, Message, AgentProfileRow, Notification, NotificationType } from './types';
 
 // Dual-mode store.
@@ -72,6 +73,8 @@ function seed(): DB {
       id: randomUUID(),
       seller_id: 'seed-user-2',
       seller_name: 'Mei',
+      seller_email: 'mei@example.com',
+      seller_contact: 'Pickup around Columbia campus',
       category: 'furniture',
       title: 'IKEA Malm desk + chair (barely used)',
       description: 'Selling my desk + chair as I move out. Pickup in Morningside Heights. Perfect for a dorm or small apartment.',
@@ -88,6 +91,8 @@ function seed(): DB {
       id: randomUUID(),
       seller_id: 'seed-user-4',
       seller_name: 'Sam',
+      seller_email: 'sam@example.com',
+      seller_contact: 'Text after email intro',
       category: 'sublet',
       title: 'Summer sublet: 1BR Upper West Side, May–Aug',
       description: 'Leaving for a summer internship. Quiet block, 5 min walk to 1 train. Partially furnished.',
@@ -104,6 +109,8 @@ function seed(): DB {
       id: randomUUID(),
       seller_id: 'seed-user-5',
       seller_name: 'Priya',
+      seller_email: 'priya@example.com',
+      seller_contact: 'Can meet near Midtown',
       category: 'electronics',
       title: 'iPad Pro 11" (2023) + Apple Pencil',
       description: 'Minor screen wear from use in school. Charger + case included.',
@@ -143,11 +150,18 @@ function usingDB(): boolean {
 
 // ----- Mappers (Supabase row → app type) -----
 
+function publicAuthorName(name: string | null | undefined, authorId: string | null | undefined) {
+  const trimmed = name?.trim();
+  if (trimmed && !['guest', 'anonymous'].includes(trimmed.toLowerCase())) return trimmed;
+  return normalizeAxioHandle(authorId ?? trimmed ?? '');
+}
+
 function mapPost(row: any): Post {
+  const authorId = row.author_id ?? '';
   return {
     id: row.id,
-    author_id: row.author_id ?? '',
-    author_name: row.author_name ?? 'Anonymous',
+    author_id: authorId,
+    author_name: publicAuthorName(row.author_name, authorId),
     author_avatar: row.author_avatar ?? null,
     content: row.content,
     images: Array.isArray(row.images) ? row.images : [],
@@ -179,6 +193,8 @@ function mapListing(row: any): Listing {
     id: row.id,
     seller_id: row.seller_id ?? '',
     seller_name: row.seller_name ?? 'Anonymous',
+    seller_email: row.seller_email ?? null,
+    seller_contact: row.seller_contact ?? null,
     category: row.category,
     title: row.title,
     description: row.description,
@@ -198,6 +214,8 @@ function mapBid(row: any): Bid {
     listing_id: row.listing_id,
     bidder_id: row.bidder_id ?? '',
     bidder_name: row.bidder_name ?? 'Anonymous',
+    bidder_email: row.bidder_email ?? null,
+    bidder_contact: row.bidder_contact ?? null,
     amount_cents: row.amount_cents,
     message: row.message ?? null,
     status: row.status,
@@ -265,11 +283,11 @@ export async function createPost(input: {
   content: string;
   images?: string[];
 }): Promise<Post> {
-  const name = input.author_name?.trim() || 'Anonymous';
+  const authorId = input.author_id ?? normalizeAxioHandle(`guest-${randomUUID()}`);
+  const name = publicAuthorName(input.author_name, authorId);
   const avatar =
     input.author_avatar ??
     `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(name)}`;
-  const authorId = input.author_id ?? `guest-${randomUUID()}`;
   const images = input.images ?? [];
   if (usingDB()) {
     const { data, error } = await supabaseAdmin()
@@ -540,6 +558,8 @@ export async function createListing(input: Omit<Listing, 'id' | 'created_at' | '
       .insert({
         seller_id: input.seller_id,
         seller_name: input.seller_name,
+        seller_email: input.seller_email,
+        seller_contact: input.seller_contact,
         category: input.category,
         title: input.title,
         description: input.description,
@@ -611,6 +631,8 @@ export async function createBid(input: {
   listing_id: string;
   bidder_id?: string;
   bidder_name: string;
+  bidder_email?: string | null;
+  bidder_contact?: string | null;
   amount_cents: number;
   message?: string | null;
 }): Promise<Bid | null> {
@@ -624,6 +646,8 @@ export async function createBid(input: {
         listing_id: input.listing_id,
         bidder_id: bidderId,
         bidder_name: input.bidder_name,
+        bidder_email: input.bidder_email ?? null,
+        bidder_contact: input.bidder_contact ?? null,
         amount_cents: input.amount_cents,
         message: input.message ?? null,
       })
@@ -637,6 +661,8 @@ export async function createBid(input: {
     listing_id: input.listing_id,
     bidder_id: bidderId,
     bidder_name: input.bidder_name,
+    bidder_email: input.bidder_email ?? null,
+    bidder_contact: input.bidder_contact ?? null,
     amount_cents: input.amount_cents,
     message: input.message ?? null,
     status: 'active',
@@ -667,6 +693,10 @@ export async function acceptBid(bidId: string): Promise<{ transaction: Transacti
         buyer_id: bid.bidder_id,
         seller_name: listing.seller_name,
         buyer_name: bid.bidder_name,
+        seller_email: listing.seller_email,
+        buyer_email: bid.bidder_email,
+        seller_contact: listing.seller_contact,
+        buyer_contact: bid.bidder_contact,
         amount_cents: bid.amount_cents,
         status: 'pending',
       })
@@ -687,6 +717,10 @@ export async function acceptBid(bidId: string): Promise<{ transaction: Transacti
     buyer_id: bid.bidder_id,
     seller_name: listing.seller_name,
     buyer_name: bid.bidder_name,
+    seller_email: listing.seller_email,
+    buyer_email: bid.bidder_email,
+    seller_contact: listing.seller_contact,
+    buyer_contact: bid.bidder_contact,
     amount_cents: bid.amount_cents,
     status: 'pending',
     created_at: new Date().toISOString(),
@@ -711,6 +745,10 @@ function mapTransaction(row: any): Transaction {
     buyer_id: row.buyer_id ?? '',
     seller_name: row.seller_name ?? 'Seller',
     buyer_name: row.buyer_name ?? 'Buyer',
+    seller_email: row.seller_email ?? null,
+    buyer_email: row.buyer_email ?? null,
+    seller_contact: row.seller_contact ?? null,
+    buyer_contact: row.buyer_contact ?? null,
     amount_cents: row.amount_cents,
     status: row.status,
     created_at: row.created_at,

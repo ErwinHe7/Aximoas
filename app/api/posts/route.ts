@@ -22,6 +22,27 @@ const PostInput = z.object({
   images: z.array(z.string().url()).max(4).optional(),
 });
 
+async function checkPostRateLimit(authorId: string) {
+  const recentPosts = await listPosts(50);
+  const now = Date.now();
+  const mine = recentPosts
+    .filter((post) => post.author_id === authorId)
+    .map((post) => new Date(post.created_at).getTime())
+    .filter((time) => Number.isFinite(time));
+
+  const lastPostAt = Math.max(0, ...mine);
+  if (lastPostAt && now - lastPostAt < 8_000) {
+    return 'Please wait a few seconds before posting again.';
+  }
+
+  const tenMinutesAgo = now - 10 * 60_000;
+  if (mine.filter((time) => time >= tenMinutesAgo).length >= 5) {
+    return 'Too many posts from this identity. Try again in a few minutes.';
+  }
+
+  return null;
+}
+
 export async function POST(req: Request) {
   const json = await req.json().catch(() => null);
   const parsed = PostInput.safeParse(json);
@@ -30,6 +51,10 @@ export async function POST(req: Request) {
   }
   try {
     const user = await getCurrentUser();
+    const rateLimitError = await checkPostRateLimit(user.id);
+    if (rateLimitError) {
+      return NextResponse.json({ error: rateLimitError }, { status: 429 });
+    }
 
     // Prefer custom display name if set, then client-provided name, then auth name
     const customName = user.authenticated ? await getDisplayName(user.id) : null;

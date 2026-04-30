@@ -90,6 +90,8 @@ export type Listing = {
   id: UUID;
   seller_id: UUID;
   seller_name: string;
+  seller_email: string | null;
+  seller_contact: string | null;
   category: ListingCategory;
   title: string;
   description: string;
@@ -108,6 +110,8 @@ export type Bid = {
   listing_id: UUID;
   bidder_id: UUID;
   bidder_name: string;
+  bidder_email: string | null;
+  bidder_contact: string | null;
   amount_cents: number;
   message: string | null;
   status: 'active' | 'accepted' | 'rejected' | 'withdrawn';
@@ -122,6 +126,10 @@ export type Transaction = {
   buyer_id: UUID;
   seller_name: string;
   buyer_name: string;
+  seller_email: string | null;
+  buyer_email: string | null;
+  seller_contact: string | null;
+  buyer_contact: string | null;
   amount_cents: number;
   status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
   created_at: string;

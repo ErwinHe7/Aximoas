@@ -3,26 +3,26 @@ import { MapPin } from 'lucide-react';
 import type { Listing } from '@/lib/types';
 import { formatCents, timeAgo } from '@/lib/format';
 
-const CAT_EMOJI: Record<Listing['category'], string> = {
-  sublet:      '🏠',
-  furniture:   '🛋️',
-  electronics: '📱',
-  books:       '📚',
-  services:    '🛠️',
-  tickets:     '🎟️',
-  tutoring:    '🎓',
-  other:       '📦',
+const CAT_LABEL: Record<Listing['category'], string> = {
+  sublet: 'Sublet',
+  furniture: 'Furniture',
+  electronics: 'Electronics',
+  books: 'Books',
+  services: 'Services',
+  tickets: 'Tickets',
+  tutoring: 'Tutoring',
+  other: 'Other',
 };
 
 const STATUS_STYLE: Record<Listing['status'], { bg: string; text: string }> = {
-  open:      { bg: 'rgba(74,124,89,0.2)',  text: '#4A7C59' },
-  pending:   { bg: 'rgba(245,158,11,0.2)', text: '#F59E0B' },
-  sold:      { bg: 'rgba(255,255,255,0.1)', text: 'rgba(247,240,232,0.4)' },
-  withdrawn: { bg: 'rgba(216,71,39,0.15)', text: 'rgba(216,71,39,0.7)' },
+  open: { bg: 'rgba(74,124,89,0.2)', text: '#4A7C59' },
+  pending: { bg: 'rgba(245,158,11,0.2)', text: '#B45309' },
+  sold: { bg: 'rgba(0,0,0,0.06)', text: 'var(--lt-muted)' },
+  withdrawn: { bg: 'rgba(216,71,39,0.15)', text: 'var(--molt-shell)' },
 };
 
 export function ListingCard({ listing }: { listing: Listing }) {
-  const emoji = CAT_EMOJI[listing.category];
+  const categoryLabel = CAT_LABEL[listing.category];
   const hasImage = listing.images.length > 0;
   const status = STATUS_STYLE[listing.status];
 
@@ -46,7 +46,7 @@ export function ListingCard({ listing }: { listing: Listing }) {
       `}</style>
 
       {hasImage ? (
-        <div className="relative h-44 overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
+        <div className="relative h-44 overflow-hidden" style={{ background: 'rgba(0,0,0,0.04)' }}>
           <img
             src={listing.images[0]}
             alt={listing.title}
@@ -57,23 +57,30 @@ export function ListingCard({ listing }: { listing: Listing }) {
               +{listing.images.length - 1}
             </span>
           )}
-          <span className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur"
-            style={{ background: 'rgba(10,21,32,0.7)', color: 'var(--lt-text)', border: '1px solid var(--lt-border)' }}>
-            {emoji} {listing.category}
+          <span
+            className="absolute left-3 top-3 rounded-full px-2.5 py-1 text-[11px] font-medium backdrop-blur"
+            style={{ background: 'rgba(10,21,32,0.72)', color: 'white', border: '1px solid rgba(255,255,255,0.16)' }}
+          >
+            {categoryLabel}
           </span>
         </div>
       ) : (
-        <div className="flex h-28 items-center justify-center text-4xl" style={{ background: 'rgba(255,255,255,0.03)' }}>
-          {emoji}
+        <div
+          className="flex h-28 items-center justify-center text-xs font-semibold uppercase tracking-widest"
+          style={{ background: 'rgba(0,0,0,0.03)', color: 'var(--lt-subtle)' }}
+        >
+          {categoryLabel}
         </div>
       )}
 
       <div className="p-4">
         <div className="flex items-center gap-2">
-          {!hasImage && <span className="text-[11px]" style={{ color: 'var(--lt-muted)' }}>{emoji} {listing.category}</span>}
+          {!hasImage && <span className="text-[11px]" style={{ color: 'var(--lt-muted)' }}>{categoryLabel}</span>}
           {listing.status !== 'open' && (
-            <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase"
-              style={{ background: status.bg, color: status.text }}>
+            <span
+              className="rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase"
+              style={{ background: status.bg, color: status.text }}
+            >
               {listing.status}
             </span>
           )}
@@ -94,8 +101,8 @@ export function ListingCard({ listing }: { listing: Listing }) {
             </div>
             <div className="text-[11px]" style={{ color: 'var(--lt-muted)' }}>
               {listing.bid_count > 0
-                ? `${listing.bid_count} bid${listing.bid_count > 1 ? 's' : ''} · top ${formatCents(listing.top_bid_cents ?? 0, listing.currency)}`
-                : 'No bids yet'}
+                ? `${listing.bid_count} offer${listing.bid_count > 1 ? 's' : ''} - top ${formatCents(listing.top_bid_cents ?? 0, listing.currency)}`
+                : 'No offers yet'}
             </div>
           </div>
           {listing.location && (

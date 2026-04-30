@@ -4,12 +4,14 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 import { Loader2, Send, ImagePlus, X, Sparkles } from 'lucide-react';
 import { AGENTS, extractMentionedAgentId } from '@/lib/agents';
 import { supabaseBrowser } from '@/lib/supabase-browser';
+import { trackPostCreated } from '@/components/PostHogProvider';
 
 type UploadedImage = { url: string; preview: string };
 
 export function PostComposer() {
   const [content, setContent] = useState('');
   const [name, setName] = useState('');
+  const [userId, setUserId] = useState<string | null>(null);
 
   // Pre-fill name from Supabase session if signed in
   useEffect(() => {
@@ -19,6 +21,7 @@ export function PostComposer() {
         const meta = u.user_metadata ?? {};
         const realName = (meta.full_name as string) || (meta.name as string) || u.email?.split('@')[0] || '';
         if (realName) setName(realName);
+        setUserId(u.id);
       }
     }).catch(() => {});
   }, []);
@@ -95,6 +98,12 @@ export function PostComposer() {
       });
       if (!res.ok) throw new Error('post failed');
       const { post } = await res.json();
+      trackPostCreated({
+        user_id: userId ?? post.author_id,
+        post_id: post.id,
+        post_length: content.trim().length,
+        has_image: images.length > 0,
+      });
       setContent('');
       setImages([]);
       // Notify FeedRealtime directly — no router.refresh() to avoid state reset

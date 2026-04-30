@@ -6,6 +6,8 @@ import { Footer } from '@/components/Footer';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { BgMesh } from '@/components/BgMesh';
 import { GoogleAnalytics } from '@/components/GoogleAnalytics';
+import { PostHogProvider } from '@/components/PostHogProvider';
+import { PostHogSession } from '@/components/PostHogSession';
 
 const fraunces = Fraunces({
   subsets: ['latin'],
@@ -50,13 +52,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="min-h-screen">
-        <GoogleAnalytics />
-        <BgMesh />
-        <Nav />
-        <main className="mx-auto max-w-5xl px-4 pb-24 pt-6">
-          <ErrorBoundary>{children}</ErrorBoundary>
-        </main>
-        <Footer />
+        <PostHogProvider>
+          <PostHogSession />
+          <GoogleAnalytics />
+          <BgMesh />
+          <Nav />
+          <main className="mx-auto max-w-5xl px-4 pb-24 pt-6">
+            <ErrorBoundary>{children}</ErrorBoundary>
+          </main>
+          <Footer />
+        </PostHogProvider>
       </body>
     </html>
   );

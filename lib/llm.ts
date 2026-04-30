@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs';
 import OpenAI from 'openai';
 
 let client: OpenAI | null = null;
@@ -35,10 +36,15 @@ function isModelUnavailable(err: any): boolean {
   );
 }
 
-export async function chat(
+export type ChatResult = {
+  content: string;
+  usage?: { prompt_tokens?: number; completion_tokens?: number };
+};
+
+export async function chatWithUsage(
   messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
   opts: { model?: string; temperature?: number; max_tokens?: number } = {}
-): Promise<string> {
+): Promise<ChatResult> {
   const tried = new Set<string>();
   const chain = [opts.model ?? DEFAULT_MODEL, ...FALLBACK_MODELS];
 
@@ -53,16 +59,33 @@ export async function chat(
         max_tokens: opts.max_tokens ?? 400,
         messages,
       });
-      const msg = res.choices[0]?.message as any;
-      // Some thinking models return content='' with reasoning_content; fall back if empty.
-      return msg?.content || msg?.reasoning_content || '';
+      const msg = res.choices[0]?.message as unknown as Record<string, unknown>;
+      const content = (msg?.content as string) || (msg?.reasoning_content as string) || '';
+      return {
+        content,
+        usage: res.usage
+          ? { prompt_tokens: res.usage.prompt_tokens, completion_tokens: res.usage.completion_tokens }
+          : undefined,
+      };
     } catch (err) {
       lastErr = err;
-      if (isModelUnavailable(err)) continue; // try next in chain
-      throw err; // real error (auth, rate limit, etc) — bubble up
+      if (isModelUnavailable(err)) continue;
+      throw err;
     }
   }
-  throw lastErr ?? new Error('No available model in fallback chain');
+  const finalErr = lastErr ?? new Error('No available model in fallback chain');
+  Sentry.captureException(finalErr, {
+    extra: { models_tried: Array.from(tried) },
+  });
+  throw finalErr;
+}
+
+export async function chat(
+  messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
+  opts: { model?: string; temperature?: number; max_tokens?: number } = {}
+): Promise<string> {
+  const result = await chatWithUsage(messages, opts);
+  return result.content;
 }
 
 export async function embed(text: string): Promise<number[] | null> {

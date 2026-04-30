@@ -1,35 +1,56 @@
+import * as Sentry from '@sentry/nextjs';
 import { AGENTS } from './agents';
-import { chat } from './llm';
-import { createReply, getPost, incrementLike } from './store';
+import { chatWithUsage } from './llm';
+import { createReply, getPost, incrementLike, listListings } from './store';
+import { startPostTrace, tracedLLMCall, flushTraces, type TraceContext } from './observability/llm-tracer';
 import type { AgentPersona, Post } from './types';
 
-/**
- * Fan out a new post to all 7 agent personas concurrently.
- *
- * Each agent:
- *  1. Generates a reply via its own TokenRouter model (`agent.model`)
- *     using the shared OPENAI_API_KEY + OPENAI_BASE_URL.
- *  2. Writes the reply to Supabase (or in-memory fallback).
- *  3. Adds a like on the original post as a pseudo-user (`agent-<slug>`),
- *     so repeat fanouts don't inflate likes from the same agent.
- *
- * Errors from any one agent are isolated (`Promise.allSettled`) so a
- * single 503 or bad response doesn't kill the other 6.
- *
- * Intended to be called fire-and-forget from the POST /api/posts handler.
- */
+const HOUSING_KW   = ['sublet', 'rent', 'room', 'apartment', 'sublease', 'housing', 'roommate', 'lease', '转租', '找房'];
+const EVENT_KW     = ['party', 'event', 'concert', 'show', 'gallery', 'tonight', 'weekend', 'ticket', '活动'];
+const FURNITURE_KW = ['furniture', 'desk', 'chair', 'couch', 'sofa', 'ikea', 'selling', 'sell', '家具'];
+
+async function buildListingContext(content: string): Promise<string | null> {
+  const lower = content.toLowerCase();
+  const isHousing   = HOUSING_KW.some((k) => lower.includes(k));
+  const isEvent     = EVENT_KW.some((k) => lower.includes(k));
+  const isFurniture = !isHousing && FURNITURE_KW.some((k) => lower.includes(k));
+  if (!isHousing && !isEvent && !isFurniture) return null;
+
+  const category = isHousing ? 'sublet' : isFurniture ? 'furniture' : 'tickets';
+  try {
+    const all = await listListings({ category });
+    const top5 = all.filter((l) => l.status === 'open').slice(0, 5);
+    if (top5.length === 0) return null;
+    const lines = top5.map((l) => {
+      const price = l.asking_price_cents > 0 ? `$${(l.asking_price_cents / 100).toFixed(0)}` : 'price TBD';
+      const loc = l.location ? ` · ${l.location}` : '';
+      return `• "${l.title}" — ${price}${loc} (see /trade/${l.id})`;
+    });
+    return `[Live listings on AXIO7 Trade]\n${lines.join('\n')}`;
+  } catch {
+    return null;
+  }
+}
+
+export type FanoutResult = {
+  succeeded: number;
+  failed: number;
+  totalLatencyMs: number;
+  totalCostUsd: number;
+};
+
 export async function fanOutAgentReplies(
   postId: string,
   mentionedAgentId?: string
-): Promise<{ succeeded: number; failed: number }> {
+): Promise<FanoutResult> {
   const post = await getPost(postId);
   if (!post) {
     console.error('[fanout] post not found', postId);
-    return { succeeded: 0, failed: 0 };
+    return { succeeded: 0, failed: 0, totalLatencyMs: 0, totalCostUsd: 0 };
   }
 
-  // If an agent was @mentioned, run it first (awaited), then fan out the rest concurrently.
-  // This ensures the mentioned agent's reply lands earliest in the feed.
+  const traceCtx = startPostTrace(postId, post.author_id);
+
   let orderedAgents = [...AGENTS];
   if (mentionedAgentId) {
     const idx = orderedAgents.findIndex((a) => a.id === mentionedAgentId);
@@ -42,12 +63,14 @@ export async function fanOutAgentReplies(
     }
   }
 
+  const fanoutStart = Date.now();
   const results = await Promise.allSettled(
-    orderedAgents.map((agent) => runOneAgent(agent, post))
+    orderedAgents.map((agent) => runOneAgent(agent, post, traceCtx))
   );
 
   let succeeded = 0;
   let failed = 0;
+  let totalCostUsd = 0;
   results.forEach((r, i) => {
     const slug = orderedAgents[i].id;
     if (r.status === 'rejected') {
@@ -57,38 +80,57 @@ export async function fanOutAgentReplies(
     }
     if (r.value.ok) {
       succeeded++;
+      totalCostUsd += r.value.costUsd;
       return;
     }
     failed++;
     console.error('[fanout]', slug, r.value.error);
   });
 
+  const totalLatencyMs = Date.now() - fanoutStart;
   console.log(`[fanout] post ${postId}: ${succeeded}/${orderedAgents.length} agents replied`);
-  return { succeeded, failed };
+
+  flushTraces().catch(() => {});
+
+  return { succeeded, failed, totalLatencyMs, totalCostUsd };
 }
 
-type AgentRunResult = { ok: true } | { ok: false; error: unknown };
+type AgentRunResult = { ok: true; costUsd: number } | { ok: false; error: unknown };
 
-async function runOneAgent(agent: AgentPersona, post: Post): Promise<AgentRunResult> {
+async function runOneAgent(
+  agent: AgentPersona,
+  post: Post,
+  traceCtx: TraceContext
+): Promise<AgentRunResult> {
   try {
-    const content = await chat(
-      [
-        { role: 'system', content: agent.system_prompt },
-        { role: 'user', content: post.content },
-      ],
-      {
-        model: agent.model,
-        temperature: 0.8,
-        max_tokens: agent.model?.includes('kimi') ? 800 : 220,
-      }
+    const listingCtx = await buildListingContext(post.content);
+    const userContent = listingCtx
+      ? `${post.content}\n\n${listingCtx}`
+      : post.content;
+
+    const result = await tracedLLMCall(
+      agent,
+      post.content,
+      () =>
+        chatWithUsage(
+          [
+            { role: 'system', content: agent.system_prompt },
+            { role: 'user', content: userContent },
+          ],
+          {
+            model: agent.model,
+            temperature: 0.8,
+            max_tokens: agent.model?.includes('kimi') ? 800 : 220,
+          }
+        ),
+      traceCtx
     );
 
-    const trimmed = content?.trim();
+    const trimmed = result.content?.trim();
     if (!trimmed) {
       return { ok: false, error: 'empty completion' };
     }
 
-    // Fire reply + like concurrently — they're independent writes.
     await Promise.all([
       createReply({
         post_id: post.id,
@@ -100,18 +142,23 @@ async function runOneAgent(agent: AgentPersona, post: Post): Promise<AgentRunRes
         confidence_score: 0.8,
         visibility: 'public',
       }),
-      // Each agent likes as its own pseudo-user so like_count increments by 7
-      // and re-triggering the fanout is a no-op per agent (toggles via
-      // post_likes uniqueness).
       incrementLike(post.id, `agent-${agent.id}`).catch((err) => {
-        // Like is nice-to-have; don't fail the whole agent run if the like
-        // dedupe table already has an entry.
         console.warn('[fanout] like failed', agent.id, err);
       }),
     ]);
 
-    return { ok: true };
+    return { ok: true, costUsd: result.costUsd };
   } catch (err) {
+    Sentry.captureException(err, {
+      extra: {
+        agent_name: agent.name,
+        agent_id: agent.id,
+        model: agent.model,
+        post_id: post.id,
+        author_id: post.author_id,
+        prompt_preview: post.content.slice(0, 200),
+      },
+    });
     return { ok: false, error: err };
   }
 }

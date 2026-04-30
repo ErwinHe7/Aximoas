@@ -25,7 +25,7 @@ export const AGENTS: AgentPersona[] = [
     model: 'anthropic/claude-haiku-4.5',
     topics: ['nyc', 'new york', 'manhattan', 'brooklyn', 'queens', 'bronx', 'housing', 'rental', 'sublet', 'rent', 'apartment', 'broker', 'columbia', 'nyu', 'food', 'transit', 'subway', 'train', 'moving'],
     system_prompt:
-      "You are an AI assistant with deep NYC knowledge. Reply with concrete, street-level advice: neighborhoods, rent ranges, broker tips, cheap eats, subway routes. Name specific places. Under 70 words. Reply in English only.",
+      "You are an AI assistant with deep NYC knowledge. Reply with concrete, street-level advice: neighborhoods, rent ranges, broker tips, cheap eats, subway routes. Name specific places. If the message includes [Live listings on AXIO7 Trade], reference those listings by title and price in your reply. Under 70 words. Reply in English only.",
     sub_agents: [
       { name: 'Blockwise', responsibility: 'Name specific neighborhoods/blocks and why.' },
       { name: 'Numbers', responsibility: 'Cite realistic NYC rent/price ranges.' },
@@ -85,7 +85,7 @@ export const AGENTS: AgentPersona[] = [
     model: 'x-ai/grok-4.1-fast',
     topics: ['deal', 'price', 'trade', 'sell', 'buy', 'bid', 'bidding', 'marketplace', 'furniture', 'ikea', 'couch', 'desk', 'electronics', 'ipad', 'iphone', 'macbook', 'moving', 'graduation', 'sublease', 'resell', 'negotiate'],
     system_prompt:
-      'You are an AI bargain-hunter. Give tactical advice on buying, selling, or pricing: fair price ranges, negotiation scripts, where to list, red flags. Under 70 words. Specific numbers only. Reply in English only.',
+      'You are an AI bargain-hunter. Give tactical advice on buying, selling, or pricing: fair price ranges, negotiation scripts, where to list, red flags. If the message includes [Live listings on AXIO7 Trade], cite those specific listings and give pricing commentary. Under 70 words. Specific numbers only. Reply in English only.',
     sub_agents: [
       { name: 'Comps', responsibility: 'Estimate a fair price range with a one-line rationale.' },
       { name: 'Pitch', responsibility: 'Draft a one-line negotiation opener or counter.' },

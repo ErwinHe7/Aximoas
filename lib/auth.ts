@@ -1,5 +1,8 @@
 import { cookies } from 'next/headers';
 import { isSupabaseConfigured, supabaseServer } from './supabase';
+import { createAxioHandle, GUEST_COOKIE, normalizeAxioHandle } from './guest-identity';
+
+export { AXIO_HANDLE_PREFIX, createAxioHandle, GUEST_COOKIE, normalizeAxioHandle } from './guest-identity';
 
 export type CurrentUser = {
   id: string;
@@ -9,8 +12,6 @@ export type CurrentUser = {
   /** true when a real Supabase session is present; false for guest cookie fallback. */
   authenticated: boolean;
 };
-
-export const GUEST_COOKIE = 'axio7_guest_id';
 
 const DEFAULT_ADMIN_EMAILS = ['gh2722@columbia.edu'];
 
@@ -69,10 +70,10 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 
   // Guest fallback. Middleware seeds the cookie; if missing, caller gets an
   // ephemeral id per-request (fine for demo writes).
-  const guestId = cookies().get(GUEST_COOKIE)?.value ?? 'guest-anon';
+  const guestId = normalizeAxioHandle(cookies().get(GUEST_COOKIE)?.value ?? createAxioHandle());
   return {
     id: guestId,
-    name: 'Guest',
+    name: guestId,
     email: null,
     avatar: `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(guestId)}`,
     authenticated: false,

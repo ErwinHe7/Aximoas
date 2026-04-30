@@ -8,9 +8,16 @@ const CATEGORIES = ['sublet', 'furniture', 'electronics', 'books', 'services', '
 
 type UploadedImage = { url: string; localPreview: string };
 
-export function ListingComposer() {
+type ListingComposerProps = {
+  initialSellerName?: string;
+  initialSellerEmail?: string | null;
+};
+
+export function ListingComposer({ initialSellerName = '', initialSellerEmail = '' }: ListingComposerProps) {
   const [form, setForm] = useState({
-    seller_name: '',
+    seller_name: initialSellerName,
+    seller_email: initialSellerEmail ?? '',
+    seller_contact: '',
     category: 'furniture' as (typeof CATEGORIES)[number],
     title: '',
     description: '',
@@ -122,6 +129,8 @@ export function ListingComposer() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           seller_name: form.seller_name.trim() || 'Anonymous',
+          seller_email: form.seller_email.trim(),
+          seller_contact: form.seller_contact.trim() || undefined,
           category: form.category,
           title: form.title.trim(),
           description: form.description.trim(),
@@ -174,6 +183,26 @@ export function ListingComposer() {
             value={form.seller_name}
             onChange={(e) => setForm({ ...form, seller_name: e.target.value })}
             placeholder="How buyers see you"
+            className="input"
+          />
+        </Field>
+        <Field label="Your email">
+          <input
+            required
+            type="email"
+            value={form.seller_email}
+            onChange={(e) => setForm({ ...form, seller_email: e.target.value })}
+            placeholder="buyers can reach you here"
+            className="input"
+          />
+        </Field>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label="Contact note (optional)">
+          <input
+            value={form.seller_contact}
+            onChange={(e) => setForm({ ...form, seller_contact: e.target.value })}
+            placeholder="phone, WeChat, pickup window"
             className="input"
           />
         </Field>

@@ -11,11 +11,15 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get('category') ?? undefined;
   const listings = await listListings({ category });
-  return NextResponse.json({ listings });
+  return NextResponse.json({
+    listings: listings.map(({ seller_email, seller_contact, ...listing }) => listing),
+  });
 }
 
 const Input = z.object({
   seller_name: z.string().min(1).max(80),
+  seller_email: z.string().email().max(200).optional(),
+  seller_contact: z.string().max(200).optional(),
   category: z.enum(['sublet', 'furniture', 'electronics', 'books', 'services', 'tickets', 'tutoring', 'other']),
   title: z.string().min(1).max(140),
   description: z.string().min(1).max(4000),
@@ -33,9 +37,15 @@ export async function POST(req: Request) {
   const d = parsed.data;
   try {
     const user = await getCurrentUser();
+    const sellerEmail = d.seller_email?.trim() || user.email;
+    if (!sellerEmail) {
+      return NextResponse.json({ error: 'seller email is required' }, { status: 400 });
+    }
     const listing = await createListing({
       seller_id: user.id,
       seller_name: d.seller_name?.trim() || user.name,
+      seller_email: sellerEmail,
+      seller_contact: d.seller_contact?.trim() || null,
       category: d.category,
       title: d.title,
       description: d.description,

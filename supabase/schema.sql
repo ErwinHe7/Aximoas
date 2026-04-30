@@ -110,6 +110,8 @@ create table if not exists public.listings (
   id uuid primary key default gen_random_uuid(),
   seller_id text not null,
   seller_name text not null default 'Anonymous',
+  seller_email text,
+  seller_contact text,
   category listing_category not null,
   title text not null check (char_length(title) between 1 and 140),
   description text not null,
@@ -133,6 +135,8 @@ create table if not exists public.bids (
   listing_id uuid not null references public.listings(id) on delete cascade,
   bidder_id text not null,
   bidder_name text not null default 'Anonymous',
+  bidder_email text,
+  bidder_contact text,
   amount_cents int not null check (amount_cents > 0),
   message text,
   status bid_status not null default 'active',
@@ -171,6 +175,10 @@ create table if not exists public.transactions (
   buyer_id text not null,
   seller_name text not null default 'Seller',
   buyer_name text not null default 'Buyer',
+  seller_email text,
+  buyer_email text,
+  seller_contact text,
+  buyer_contact text,
   amount_cents int not null,
   status transaction_status not null default 'pending',
   created_at timestamptz not null default now()
@@ -272,9 +280,10 @@ Say hello 👋',
   '{}'
 where not exists (select 1 from public.posts limit 1);
 
-insert into public.listings (seller_id, seller_name, category, title, description, asking_price_cents, location, images)
+insert into public.listings (seller_id, seller_name, seller_email, seller_contact, category, title, description, asking_price_cents, location, images)
 select
-  'axio7-seed', 'AXIO7 Team', 'sublet',
+  'axio7-seed', 'AXIO7 Team', 'trade@example.com', 'Reply by email',
+  'sublet',
   '[Sample] Summer sublet: studio in Morningside Heights, May–Aug',
   'This is a sample listing to show how Trade works. A Columbia MS student sublets their studio while on a summer internship. Furnished, 5 min walk to 1 train. DM to bid.',
   250000, 'Morningside Heights, NYC', '[]'::jsonb

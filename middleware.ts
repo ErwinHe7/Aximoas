@@ -1,6 +1,6 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { GUEST_COOKIE } from '@/lib/auth';
+import { createAxioHandle, GUEST_COOKIE, normalizeAxioHandle } from '@/lib/guest-identity';
 
 /**
  * Runs on every request that isn't a static asset.
@@ -39,11 +39,10 @@ export async function middleware(req: NextRequest) {
   }
 
   // Guest cookie — only set if missing. One year.
-  if (!req.cookies.get(GUEST_COOKIE)?.value) {
-    const raw = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 18);
-    const hex = raw.replace(/-/g, '').toUpperCase().slice(0, 8);
-    const guestId = `AXIO0x${hex}`;
-    res.cookies.set(GUEST_COOKIE, guestId, {
+  const currentGuestId = req.cookies.get(GUEST_COOKIE)?.value;
+  const normalizedGuestId = currentGuestId ? normalizeAxioHandle(currentGuestId) : createAxioHandle();
+  if (!currentGuestId || currentGuestId !== normalizedGuestId) {
+    res.cookies.set(GUEST_COOKIE, normalizedGuestId, {
       httpOnly: false,
       path: '/',
       sameSite: 'lax',
