@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Home, ShoppingBag, User, LogIn, LogOut, Info } from 'lucide-react';
+import { Home, ShoppingBag, User, LogIn, LogOut, Info, CalendarDays } from 'lucide-react';
 import { getCurrentUser } from '@/lib/auth';
 import { BellButton } from './BellButton';
 
@@ -20,8 +20,9 @@ export async function Nav() {
         </Link>
 
         <nav className="flex items-center gap-0.5 text-sm">
-          <NavLink href="/"        icon={<Home className="h-4 w-4" />}        label="Home"    />
-          <NavLink href="/trade"   icon={<ShoppingBag className="h-4 w-4" />} label="Trade"   />
+          <NavLink href="/"        icon={<Home className="h-4 w-4" />}           label="Home"   />
+          <NavLink href="/events"  icon={<CalendarDays className="h-4 w-4" />}  label="Events" />
+          <NavLink href="/trade"   icon={<ShoppingBag className="h-4 w-4" />}   label="Trade"  />
           <NavLink href="/about"   icon={<Info className="h-4 w-4" />} label="About"   />
           <NavLink href="/ask"     icon={<span className="text-xs font-bold" style={{ color: 'var(--molt-coral)' }}>Ask</span>} label="Ask" />
           <NavLink href="/profile" icon={<User className="h-4 w-4" />}       label="Profile" />
