@@ -3,9 +3,33 @@
 import { Bot, ThumbsDown, ThumbsUp, Sparkles } from 'lucide-react';
 import { useState, useTransition } from 'react';
 import { motion, useMotionValue, useReducedMotion } from 'framer-motion';
+import Link from 'next/link';
 import type { Reply } from '@/lib/types';
 import { timeAgo } from '@/lib/format';
 import { AGENTS } from '@/lib/agents';
+
+// Extract /events/<uuid> references from agent reply text
+function extractEventIds(text: string): string[] {
+  const ids: string[] = [];
+  const re = /\/events\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/gi;
+  let m;
+  while ((m = re.exec(text)) !== null) {
+    if (!ids.includes(m[1])) ids.push(m[1]);
+  }
+  return ids;
+}
+
+function InlineEventRef({ eventId }: { eventId: string }) {
+  return (
+    <Link
+      href={`/events/${eventId}`}
+      className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition hover:opacity-90"
+      style={{ background: 'rgba(216,71,39,0.08)', border: '1px solid rgba(216,71,39,0.2)', color: 'var(--molt-shell)' }}
+    >
+      🎉 View event →
+    </Link>
+  );
+}
 
 // Per-agent left bar color
 const AGENT_BAR: Record<string, string> = {
@@ -43,6 +67,7 @@ export function AgentReplyCard({ reply, index = 0 }: Props) {
   const text = reply.content ?? '';
   const isLong = text.length > 260;
   const display = expanded || !isLong ? text : text.slice(0, 260).trimEnd() + '…';
+  const eventIds = extractEventIds(text);
 
   function handleMouseEnter() { if (!prefersReduced) scale.set(1.012); }
   function handleMouseLeave() { scale.set(1); }
@@ -119,6 +144,13 @@ export function AgentReplyCard({ reply, index = 0 }: Props) {
             <button onClick={() => setExpanded((v) => !v)} className="mt-1 text-[12px] font-medium" style={{ color: 'var(--lt-muted)' }}>
               {expanded ? 'Show less' : 'Show more'}
             </button>
+          )}
+
+          {/* Inline event buttons — auto-detected from /events/<uuid> in reply text */}
+          {eventIds.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {eventIds.map((id) => <InlineEventRef key={id} eventId={id} />)}
+            </div>
           )}
 
           <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11px]" style={{ color: 'var(--lt-subtle)' }}>
