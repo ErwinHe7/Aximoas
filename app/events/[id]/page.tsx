@@ -37,13 +37,19 @@ function icsContent(event: Event): string {
 
 async function getEvent(id: string): Promise<Event | null> {
   if (!isSupabaseConfigured()) return null;
-  const { data } = await supabaseAdmin()
-    .from('events')
-    .select('*')
-    .eq('id', id)
-    .eq('status', 'published')
-    .maybeSingle();
-  return data as Event | null;
+  try {
+    const { data, error } = await supabaseAdmin()
+      .from('events')
+      .select('*')
+      .eq('id', id)
+      .eq('status', 'published')
+      .maybeSingle();
+    if (error) { console.error('[EventDetail]', error.message); return null; }
+    return data as Event | null;
+  } catch (err) {
+    console.error('[EventDetail] fetch failed:', err);
+    return null;
+  }
 }
 
 export default async function EventDetailPage({ params }: { params: { id: string } }) {

@@ -67,8 +67,17 @@ async function getEvents(params: {
   if (params.borough) q = q.eq('borough', params.borough);
   if (params.free) q = q.eq('is_free', true);
 
-  const { data } = await q;
-  return (data ?? []) as Event[];
+  try {
+    const { data, error } = await q;
+    if (error) {
+      console.error('[EventsPage] query error:', error.message);
+      return [];
+    }
+    return (data ?? []) as Event[];
+  } catch (err) {
+    console.error('[EventsPage] fetch failed:', err);
+    return [];
+  }
 }
 
 export default async function EventsPage({
