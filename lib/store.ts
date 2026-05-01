@@ -208,6 +208,11 @@ function mapListing(row: any): Listing {
     top_bid_cents: row.top_bid_cents ?? null,
   };
 }
+
+function isMissingDbColumn(error: any, columnName: string) {
+  const message = String(error?.message ?? error?.details ?? '');
+  return error?.code === 'PGRST204' && message.includes(`'${columnName}'`);
+}
 function mapBid(row: any): Bid {
   return {
     id: row.id,
@@ -553,23 +558,34 @@ export async function getListing(id: string): Promise<Listing | null> {
 
 export async function createListing(input: Omit<Listing, 'id' | 'created_at' | 'bid_count' | 'top_bid_cents' | 'status'>): Promise<Listing> {
   if (usingDB()) {
-    const { data, error } = await supabaseAdmin()
+    const payload: Record<string, unknown> = {
+      seller_id: input.seller_id,
+      seller_name: input.seller_name,
+      seller_email: input.seller_email,
+      seller_contact: input.seller_contact,
+      category: input.category,
+      title: input.title,
+      description: input.description,
+      asking_price_cents: input.asking_price_cents,
+      currency: input.currency,
+      location: input.location,
+      images: input.images,
+    };
+    let { data, error } = await supabaseAdmin()
       .from('listings')
-      .insert({
-        seller_id: input.seller_id,
-        seller_name: input.seller_name,
-        seller_email: input.seller_email,
-        seller_contact: input.seller_contact,
-        category: input.category,
-        title: input.title,
-        description: input.description,
-        asking_price_cents: input.asking_price_cents,
-        currency: input.currency,
-        location: input.location,
-        images: input.images,
-      })
+      .insert(payload)
       .select('*')
       .single();
+    if (isMissingDbColumn(error, 'seller_contact')) {
+      delete payload.seller_contact;
+      const retry = await supabaseAdmin()
+        .from('listings')
+        .insert(payload)
+        .select('*')
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
     return mapListing(data);
   }
@@ -640,19 +656,30 @@ export async function createBid(input: {
   if (!listing || listing.status !== 'open') return null;
   const bidderId = input.bidder_id ?? `guest-bidder-${randomUUID()}`;
   if (usingDB()) {
-    const { data, error } = await supabaseAdmin()
+    const payload: Record<string, unknown> = {
+      listing_id: input.listing_id,
+      bidder_id: bidderId,
+      bidder_name: input.bidder_name,
+      bidder_email: input.bidder_email ?? null,
+      bidder_contact: input.bidder_contact ?? null,
+      amount_cents: input.amount_cents,
+      message: input.message ?? null,
+    };
+    let { data, error } = await supabaseAdmin()
       .from('bids')
-      .insert({
-        listing_id: input.listing_id,
-        bidder_id: bidderId,
-        bidder_name: input.bidder_name,
-        bidder_email: input.bidder_email ?? null,
-        bidder_contact: input.bidder_contact ?? null,
-        amount_cents: input.amount_cents,
-        message: input.message ?? null,
-      })
+      .insert(payload)
       .select('*')
       .single();
+    if (isMissingDbColumn(error, 'bidder_contact')) {
+      delete payload.bidder_contact;
+      const retry = await supabaseAdmin()
+        .from('bids')
+        .insert(payload)
+        .select('*')
+        .single();
+      data = retry.data;
+      error = retry.error;
+    }
     if (error) throw error;
     return mapBid(data);
   }
@@ -684,30 +711,55 @@ export async function acceptBid(bidId: string): Promise<{ transaction: Transacti
   if (!listing || listing.status !== 'open') return null;
 
   if (usingDB()) {
-    const { data: tx, error: txErr } = await supabaseAdmin()
+    const payload: Record<string, unknown> = {
+      listing_id: listing.id,
+      winning_bid_id: bid.id,
+      seller_id: listing.seller_id,
+      buyer_id: bid.bidder_id,
+      seller_name: listing.seller_name,
+      buyer_name: bid.bidder_name,
+      seller_email: listing.seller_email,
+      buyer_email: bid.bidder_email,
+      seller_contact: listing.seller_contact,
+      buyer_contact: bid.bidder_contact,
+      amount_cents: bid.amount_cents,
+      status: 'pending',
+    };
+    let { data: tx, error: txErr } = await supabaseAdmin()
       .from('transactions')
-      .insert({
-        listing_id: listing.id,
-        winning_bid_id: bid.id,
-        seller_id: listing.seller_id,
-        buyer_id: bid.bidder_id,
-        seller_name: listing.seller_name,
-        buyer_name: bid.bidder_name,
-        seller_email: listing.seller_email,
-        buyer_email: bid.bidder_email,
-        seller_contact: listing.seller_contact,
-        buyer_contact: bid.bidder_contact,
-        amount_cents: bid.amount_cents,
-        status: 'pending',
-      })
+      .insert(payload)
       .select('*')
       .single();
+    if (
+      isMissingDbColumn(txErr, 'seller_contact') ||
+      isMissingDbColumn(txErr, 'buyer_contact') ||
+      isMissingDbColumn(txErr, 'seller_email') ||
+      isMissingDbColumn(txErr, 'buyer_email')
+    ) {
+      for (const column of ['seller_contact', 'buyer_contact', 'seller_email', 'buyer_email']) {
+        delete payload[column];
+      }
+      const retry = await supabaseAdmin()
+        .from('transactions')
+        .insert(payload)
+        .select('*')
+        .single();
+      tx = retry.data;
+      txErr = retry.error;
+    }
     if (txErr) throw txErr;
     await supabaseAdmin().from('bids').update({ status: 'accepted' }).eq('id', bid.id);
     await supabaseAdmin().from('bids').update({ status: 'rejected' }).eq('listing_id', listing.id).neq('id', bid.id).eq('status', 'active');
     await supabaseAdmin().from('listings').update({ status: 'pending' }).eq('id', listing.id);
     const updated = await getListing(listing.id);
-    return { transaction: mapTransaction(tx), listing: updated! };
+    const transaction = {
+      ...mapTransaction(tx),
+      seller_email: listing.seller_email,
+      buyer_email: bid.bidder_email,
+      seller_contact: listing.seller_contact,
+      buyer_contact: bid.bidder_contact,
+    };
+    return { transaction, listing: updated! };
   }
   const tx: Transaction = {
     id: randomUUID(),
@@ -732,6 +784,22 @@ export async function acceptBid(bidId: string): Promise<{ transaction: Transacti
   const l = mem().listings.find((x) => x.id === listing.id);
   if (l) l.status = 'pending';
   return { transaction: tx, listing: l! };
+}
+
+export async function rollbackTradeConnection(input: { listingId: string; bidId: string; transactionId: string }) {
+  if (usingDB()) {
+    await supabaseAdmin().from('transactions').delete().eq('id', input.transactionId);
+    await supabaseAdmin().from('bids').update({ status: 'active' }).eq('id', input.bidId);
+    await supabaseAdmin().from('listings').update({ status: 'open' }).eq('id', input.listingId).eq('status', 'pending');
+    return;
+  }
+
+  const db = mem();
+  db.transactions = db.transactions.filter((tx) => tx.id !== input.transactionId);
+  const bid = db.bids.find((b) => b.id === input.bidId);
+  if (bid) bid.status = 'active';
+  const listing = db.listings.find((l) => l.id === input.listingId);
+  if (listing && listing.status === 'pending') listing.status = 'open';
 }
 
 // ===== Transactions & Messages =====
@@ -800,6 +868,88 @@ export async function listMessages(transactionId: string): Promise<Message[]> {
     return (data ?? []).map(mapMessage);
   }
   return mem().messages.filter((m) => m.transaction_id === transactionId);
+}
+
+// ================ Inbox / Transactions by user ================
+
+export type TransactionSummary = Transaction & {
+  listing_title: string;
+  listing_category: string;
+  last_message: string | null;
+  last_message_at: string | null;
+  unread_count: number;
+};
+
+export async function listTransactionsByUser(userId: string): Promise<TransactionSummary[]> {
+  if (!usingDB()) {
+    return mem().transactions
+      .filter((t) => t.seller_id === userId || t.buyer_id === userId)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at))
+      .map((t) => ({
+        ...t,
+        listing_title: mem().listings.find((l) => l.id === t.listing_id)?.title ?? 'Listing',
+        listing_category: mem().listings.find((l) => l.id === t.listing_id)?.category ?? 'other',
+        last_message: null,
+        last_message_at: null,
+        unread_count: 0,
+      }));
+  }
+  const { data: txns, error } = await supabaseAdmin()
+    .from('transactions')
+    .select('*')
+    .or(`seller_id.eq.${userId},buyer_id.eq.${userId}`)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  if (!txns || txns.length === 0) return [];
+
+  const results = await Promise.all(
+    txns.map(async (tx: any) => {
+      const [listing, msgs] = await Promise.all([
+        supabaseAdmin().from('listings').select('title,category').eq('id', tx.listing_id).maybeSingle(),
+        supabaseAdmin()
+          .from('messages')
+          .select('content,created_at,sender_id')
+          .eq('transaction_id', tx.id)
+          .order('created_at', { ascending: false })
+          .limit(10),
+      ]);
+      const allMsgs = msgs.data ?? [];
+      const lastMsg = allMsgs[0];
+      const unread = allMsgs.filter(
+        (m: any) => m.sender_id !== userId && m.sender_id !== 'system'
+      ).length;
+      return {
+        ...mapTransaction(tx),
+        listing_title: listing.data?.title ?? 'Listing',
+        listing_category: listing.data?.category ?? 'other',
+        last_message: lastMsg?.content?.slice(0, 80) ?? null,
+        last_message_at: lastMsg?.created_at ?? null,
+        unread_count: unread,
+      };
+    })
+  );
+  return results;
+}
+
+export async function getUnreadMessageCount(userId: string): Promise<number> {
+  if (!usingDB()) return 0;
+  const { data: txns } = await supabaseAdmin()
+    .from('transactions')
+    .select('id')
+    .or(`seller_id.eq.${userId},buyer_id.eq.${userId}`);
+  if (!txns || txns.length === 0) return 0;
+  const ids = txns.map((t: any) => t.id);
+  let total = 0;
+  for (const txId of ids) {
+    const { count } = await supabaseAdmin()
+      .from('messages')
+      .select('*', { count: 'exact', head: true })
+      .eq('transaction_id', txId)
+      .neq('sender_id', userId)
+      .neq('sender_id', 'system');
+    total += count ?? 0;
+  }
+  return total;
 }
 
 // ================ Notifications ================

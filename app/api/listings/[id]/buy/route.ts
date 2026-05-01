@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { acceptBid, createBid, getListing } from '@/lib/store';
+import { formatCents } from '@/lib/format';
+import { acceptBid, createBid, createMessage, getListing, rollbackTradeConnection } from '@/lib/store';
 import { getCurrentUser } from '@/lib/auth';
 import { isTradeEmailConfigured, sendTradeConnectionEmails } from '@/lib/trade-email';
 
@@ -65,8 +66,49 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       listing: result.listing,
       transaction: result.transaction,
     });
-    return NextResponse.json({ bid, ...result, email });
+
+    if (!email.ok) {
+      console.error('[trade-buy] email failed', {
+        listingId: listing.id,
+        skipped: email.skipped,
+        error: email.error,
+      });
+      await rollbackTradeConnection({
+        listingId: result.listing.id,
+        bidId: bid.id,
+        transactionId: result.transaction.id,
+      }).catch((rollbackError) => {
+        console.error('[trade-buy] rollback failed after email failure', {
+          listingId: listing.id,
+          error: rollbackError?.message ?? rollbackError,
+        });
+      });
+      return NextResponse.json(
+        {
+          error: email.error ?? 'Trade email failed. Please try again.',
+          bid,
+          ...result,
+          email,
+        },
+        { status: email.skipped ? 503 : 502 }
+      );
+    }
+
+    // Post a system message to kick off the thread
+    await createMessage({
+      transaction_id: result.transaction.id,
+      sender_id: 'system',
+      sender_name: 'AXIO7',
+      content: `Trade connection created for "${listing.title}" (${formatCents(listing.asking_price_cents, listing.currency)}). Both sides have been introduced by email. Use this thread to coordinate pickup, payment, and details.`,
+    }).catch(() => {});
+
+    const threadUrl = `/trade/${listing.id}/thread?tx=${result.transaction.id}`;
+    return NextResponse.json({ bid, ...result, email, threadUrl });
   } catch (err: any) {
+    console.error('[trade-buy] failed', {
+      listingId: params.id,
+      error: err?.message ?? err,
+    });
     return NextResponse.json({ error: err?.message ?? 'failed' }, { status: 500 });
   }
 }

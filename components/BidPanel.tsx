@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Heart, Loader2 } from 'lucide-react';
 import type { Listing } from '@/lib/types';
 import { formatCents } from '@/lib/format';
@@ -9,7 +10,6 @@ import { formatCents } from '@/lib/format';
 type BidPanelUser = {
   id: string;
   name: string;
-  email: string | null;
   authenticated: boolean;
 };
 
@@ -33,7 +33,6 @@ export function BidPanel({ listing, user }: { listing: Listing; bids?: unknown[]
   const isSeller = listing.seller_id === user.id;
   const [form, setForm] = useState({
     name: startingName(user),
-    email: user.email ?? '',
     message: '',
   });
   const [buying, setBuying] = useState(false);
@@ -45,7 +44,6 @@ export function BidPanel({ listing, user }: { listing: Listing; bids?: unknown[]
     setError(null);
     setNotice(null);
     if (!form.name.trim()) { setError('Please enter your name.'); return; }
-    if (!form.email.trim()) { setError('Please enter your email.'); return; }
 
     setBuying(true);
     try {
@@ -54,7 +52,6 @@ export function BidPanel({ listing, user }: { listing: Listing; bids?: unknown[]
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           buyer_name: form.name.trim(),
-          buyer_email: form.email.trim(),
           message: form.message.trim() || undefined,
         }),
       });
@@ -63,11 +60,12 @@ export function BidPanel({ listing, user }: { listing: Listing; bids?: unknown[]
         setError(data.error ?? 'Connection failed. Try again.');
         return;
       }
-      setNotice(
-        data.email?.ok
-          ? "You're connected! Both you and the seller have been emailed. Check your inbox."
-          : `Connected! ${data.email?.error ?? 'Check your inbox for details.'}`
-      );
+      // Redirect to the private thread
+      if (data.threadUrl) {
+        router.push(data.threadUrl);
+        return;
+      }
+      setNotice("You're connected! Check your inbox for the email introduction.");
       router.refresh();
     } finally {
       setBuying(false);
@@ -97,20 +95,24 @@ export function BidPanel({ listing, user }: { listing: Listing; bids?: unknown[]
             </span>
           </div>
 
-          <div className="grid gap-2 sm:grid-cols-2">
+          {!user.authenticated ? (
+            <div className="rounded-lg px-3 py-3 text-sm" style={{ background: 'rgba(216,71,39,0.08)', border: '1px solid rgba(216,71,39,0.18)', color: 'var(--lt-muted)' }}>
+              <p>Sign in with Google to connect. AXIO7 will email both sides privately.</p>
+              <Link
+                href={`/auth/signin?next=/trade/${listing.id}`}
+                className="mt-3 inline-flex rounded-full px-4 py-2 text-xs font-semibold text-white"
+                style={{ background: 'var(--molt-shell)' }}
+              >
+                Continue with Google
+              </Link>
+            </div>
+          ) : (
+            <>
+          <div className="grid gap-2">
             <input
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="Your name"
-              required
-              className={inputCls}
-              style={inputStyle}
-            />
-            <input
-              type="email"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              placeholder="Your email"
               required
               className={inputCls}
               style={inputStyle}
@@ -144,8 +146,10 @@ export function BidPanel({ listing, user }: { listing: Listing; bids?: unknown[]
           </button>
 
           <p className="text-center text-[11px]" style={{ color: 'var(--lt-subtle)' }}>
-            Both you and the seller will receive an email introduction.
+            AXIO7 uses your account email privately and emails both sides.
           </p>
+            </>
+          )}
         </div>
       )}
 
