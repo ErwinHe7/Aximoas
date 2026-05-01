@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Clock, MapPin, Rocket, BookOpen, Tag, Sparkles, Heart, MessageCircle } from 'lucide-react';
+import { Flame, Heart, MessageCircle } from 'lucide-react';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabaseBrowser } from '@/lib/supabase-browser';
@@ -9,20 +9,22 @@ import type { Post } from '@/lib/types';
 export type FeedTab =
   | 'all'
   | 'hot'
-  | 'nyc'
-  | 'startup'
-  | 'books'
-  | 'deals'
-  | 'philosophy';
+  | 'sublet'
+  | 'events'
+  | 'founders'
+  | 'marketplace'
+  | 'dining'
+  | 'nyc';
 
-const TABS: { id: FeedTab; label: string; icon: React.ComponentType<{ className?: string }>; keywords: string[] }[] = [
-  { id: 'all',        label: 'All',        icon: Sparkles, keywords: [] },
-  { id: 'hot',        label: '🔥 Hot',     icon: Flame,    keywords: [] },
-  { id: 'nyc',        label: 'NYC',        icon: MapPin,   keywords: ['nyc', 'new york', 'manhattan', 'brooklyn', 'queens', 'subway', 'columbia', 'nyu', 'rent', 'apartment', 'sublet'] },
-  { id: 'startup',    label: 'Startup',    icon: Rocket,   keywords: ['startup', 'product', 'ship', 'build', 'mvp', 'launch', 'founder', 'vc', 'fundraise'] },
-  { id: 'books',      label: 'Books',      icon: BookOpen, keywords: ['book', 'read', 'reading', 'novel', 'essay', 'writing', 'paper', 'thesis'] },
-  { id: 'deals',      label: 'Deals',      icon: Tag,      keywords: ['deal', 'price', 'sell', 'buy', 'trade', 'bid', 'furniture', 'couch', 'ikea', 'iphone', 'macbook'] },
-  { id: 'philosophy', label: 'Philosophy', icon: Clock,    keywords: ['meaning', 'purpose', 'identity', 'philosophy', 'reflect', 'doubt', 'love', 'friendship'] },
+const TABS: { id: FeedTab; label: string; keywords: string[] }[] = [
+  { id: 'all',         label: '✨ All',         keywords: [] },
+  { id: 'hot',         label: '🔥 Hot',         keywords: [] },
+  { id: 'sublet',      label: '🏠 Sublet',      keywords: ['sublet', 'sublease', 'rent', 'room', 'apartment', 'roommate', 'lease', 'housing', '转租', '找房', '房'] },
+  { id: 'events',      label: '🎉 Events',      keywords: ['party', 'event', 'concert', 'tonight', 'weekend', 'happening', 'show', 'gallery', 'museum', 'mixer', 'meetup', '活动', '派对'] },
+  { id: 'founders',    label: '💼 Founders',    keywords: ['founder', 'startup', 'vc', 'fundraise', 'investor', 'pitch', 'pmf', 'mvp', 'launch', 'build', 'ship', '创业'] },
+  { id: 'marketplace', label: '🛒 Marketplace', keywords: ['sell', 'selling', 'buy', 'trade', 'furniture', 'desk', 'chair', 'couch', 'sofa', 'ikea', 'iphone', 'macbook', 'laptop', 'electronics', 'used'] },
+  { id: 'dining',      label: '🍱 Dining',      keywords: ['dining', 'swipe', 'meal', 'food', 'eat', 'columbia dining', 'dining plan', '饭卡', '餐'] },
+  { id: 'nyc',         label: '🗽 NYC',         keywords: ['nyc', 'new york', 'manhattan', 'brooklyn', 'queens', 'subway', 'columbia', 'nyu', 'harlem', 'morningside'] },
 ];
 
 export function FeedTabs({ value, onChange }: { value: FeedTab; onChange: (t: FeedTab) => void }) {
@@ -31,7 +33,6 @@ export function FeedTabs({ value, onChange }: { value: FeedTab; onChange: (t: Fe
       <div className="flex items-center gap-1.5">
         {TABS.map((t) => {
           const active = value === t.id;
-          const Icon = t.icon;
           return (
             <button
               key={t.id}
@@ -47,7 +48,6 @@ export function FeedTabs({ value, onChange }: { value: FeedTab; onChange: (t: Fe
                 color: 'var(--lt-muted)',
               }}
             >
-              <Icon className="h-3.5 w-3.5" />
               {t.label}
             </button>
           );
@@ -70,11 +70,10 @@ export function filterByTab<T extends { content: string; like_count: number; rep
     });
   }
   const tabDef = TABS.find((t) => t.id === tab);
-  if (!tabDef) return posts;
-  const kws = tabDef.keywords;
+  if (!tabDef || tabDef.keywords.length === 0) return posts;
   return posts.filter((p) => {
     const text = p.content.toLowerCase();
-    return kws.some((k) => text.includes(k));
+    return tabDef.keywords.some((k) => text.includes(k));
   });
 }
 

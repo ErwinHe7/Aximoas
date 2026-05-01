@@ -4,6 +4,7 @@ import { TrendingStrip } from '@/components/FeedTabs';
 import { HeroSection } from '@/components/HeroSection';
 import { StatsBar } from '@/components/StatsBar';
 import { ParticleDust } from '@/components/ParticleDust';
+import { OnboardingModal } from '@/components/OnboardingModal';
 import { listPosts, listReplies } from '@/lib/store';
 import { AGENTS } from '@/lib/agents';
 import { isSupabaseConfigured, supabaseAdmin } from '@/lib/supabase';
@@ -60,6 +61,7 @@ export default async function FeedPage() {
       <div className="relative z-10">
         {/* Hero — now on gold background */}
         <HeroSection lastPostTime={posts[0]?.created_at} user={user} />
+        <OnboardingModal authenticated={user.authenticated} />
 
         {/* Stats bar */}
         <section className="px-4 pt-4 pb-6">

@@ -12,6 +12,23 @@ import { ReplyComposer } from './ReplyComposer';
 
 const POST_CLAMP_CHARS = 360;
 
+type ContentTag = { emoji: string; label: string; color: string };
+
+function detectContentType(content: string): ContentTag | null {
+  const t = content.toLowerCase();
+  if (/sublet|sublease|roommate|1br|2br|studio|rent.*room|room.*rent|转租|找房/.test(t))
+    return { emoji: '🏠', label: 'Sublet', color: '#0284C7' };
+  if (/dining.*swipe|swipe.*dining|meal.*plan|dining plan|饭卡/.test(t))
+    return { emoji: '🍱', label: 'Dining', color: '#D97706' };
+  if (/party|parties|tonight|this weekend|concert|show|gallery|mixer|meetup|lecture|派对|活动/.test(t))
+    return { emoji: '🎉', label: 'Event', color: '#7C3AED' };
+  if (/founder|startup|vc |fundrais|pitch deck|pmf|series [abc]|angel invest|创业/.test(t))
+    return { emoji: '💼', label: 'Founder', color: '#059669' };
+  if (/sell(?:ing)?|for sale|ikea|macbook|iphone|ipad|laptop|couch|desk|chair|furniture/.test(t))
+    return { emoji: '🛒', label: 'Marketplace', color: '#C2410C' };
+  return null;
+}
+
 function resolveAgentName(reply: Reply): string {
   if (reply.agent_persona) {
     const agent = AGENTS.find((a) => a.id === reply.agent_persona);
@@ -114,6 +131,9 @@ export function PostCard({ post, replies, canDelete, canPin }: { post: Post; rep
   const humanReplies = allReplies.filter((r) => r.author_kind === 'human');
   const awaitingAgents = agentReplies.length === 0 && Date.now() - new Date(post.created_at).getTime() < 60_000;
 
+  // Detect content type for badge
+  const contentTag = detectContentType(post.content);
+
   return (
     <motion.article
       data-block="post-card"
@@ -135,8 +155,16 @@ export function PostCard({ post, replies, canDelete, canPin }: { post: Post; rep
       <header className="flex items-start gap-3.5">
         <img src={post.author_avatar ?? ''} alt="" className="h-10 w-10 flex-shrink-0 rounded-full ring-2 ring-black/5" />
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-[15px] font-semibold" style={{ color: 'var(--lt-text)' }}>{post.author_name}</span>
+            {contentTag && (
+              <span
+                className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                style={{ background: `${contentTag.color}15`, color: contentTag.color, border: `1px solid ${contentTag.color}30` }}
+              >
+                {contentTag.emoji} {contentTag.label}
+              </span>
+            )}
             <span className="text-xs" style={{ color: 'var(--lt-subtle)' }}>· {timeAgo(post.created_at)}</span>
             <div className="ml-auto flex items-center gap-1">
               {canPin && (
