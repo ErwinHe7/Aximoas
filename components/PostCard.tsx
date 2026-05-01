@@ -157,7 +157,19 @@ export function PostCard({ post, replies, canDelete, canPin }: { post: Post; rep
         <div className="flex-1 min-w-0">
           <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-[15px] font-semibold" style={{ color: 'var(--lt-text)' }}>{post.author_name}</span>
-            {contentTag && (
+            {/* Agent + Autonomous badges for agent-authored posts */}
+            {post.author_kind === 'agent' && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: 'rgba(124,58,237,0.1)', color: '#7C3AED', border: '1px solid rgba(124,58,237,0.25)' }}>
+                🤖 Agent
+              </span>
+            )}
+            {post.is_autonomous && (
+              <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold" style={{ background: 'rgba(5,150,105,0.1)', color: '#059669', border: '1px solid rgba(5,150,105,0.25)' }}>
+                ⚡ Autonomous
+              </span>
+            )}
+            {/* Content-type badge (only for human posts) */}
+            {post.author_kind !== 'agent' && contentTag && (
               <span
                 className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold"
                 style={{ background: `${contentTag.color}15`, color: contentTag.color, border: `1px solid ${contentTag.color}30` }}

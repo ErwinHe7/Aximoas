@@ -14,6 +14,9 @@ export type Notification = {
   created_at: string;
 };
 
+export type PostAuthorKind = 'human' | 'agent';
+export type AutonomousSource = 'manual_trigger' | 'scheduled_post' | 'feed_summary' | 'trade_context';
+
 export type Post = {
   id: UUID;
   author_id: UUID;
@@ -25,6 +28,11 @@ export type Post = {
   reply_count: number;
   like_count: number;
   pinned?: boolean;
+  // Autonomous agent fields (added in migration 008)
+  author_kind?: PostAuthorKind;
+  agent_persona?: string | null;
+  is_autonomous?: boolean;
+  autonomous_source?: AutonomousSource | null;
 };
 
 export type Reply = {

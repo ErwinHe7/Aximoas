@@ -52,11 +52,20 @@ export default async function AdminReviewPage() {
   return (
     <LightPage>
       <div className="space-y-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Admin · Review queue</h1>
-          <p className="mt-1 text-sm opacity-70">
-            Low-confidence or flagged agent replies land here. Approve to publish, reject to hide.
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Admin · Review queue</h1>
+            <p className="mt-1 text-sm opacity-70">
+              Low-confidence or flagged agent replies land here. Approve to publish, reject to hide.
+            </p>
+          </div>
+          <Link
+            href="/admin/agents"
+            className="inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            style={{ background: 'var(--molt-shell)' }}
+          >
+            🤖 Agent Control →
+          </Link>
         </div>
         {replies.length === 0 ? (
           <div className="rounded-xl border border-dashed border-black/20 bg-white/70 p-8 text-center text-sm opacity-70">

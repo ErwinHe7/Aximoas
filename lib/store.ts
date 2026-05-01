@@ -169,6 +169,10 @@ function mapPost(row: any): Post {
     reply_count: row.reply_count ?? 0,
     like_count: row.like_count ?? 0,
     pinned: row.pinned ?? false,
+    author_kind: row.author_kind ?? 'human',
+    agent_persona: row.agent_persona ?? null,
+    is_autonomous: row.is_autonomous ?? false,
+    autonomous_source: row.autonomous_source ?? null,
   };
 }
 function mapReply(row: any): Reply {
@@ -287,6 +291,11 @@ export async function createPost(input: {
   author_avatar?: string | null;
   content: string;
   images?: string[];
+  // Autonomous agent fields
+  author_kind?: 'human' | 'agent';
+  agent_persona?: string | null;
+  is_autonomous?: boolean;
+  autonomous_source?: string | null;
 }): Promise<Post> {
   const authorId = input.author_id ?? normalizeAxioHandle(`guest-${randomUUID()}`);
   const name = publicAuthorName(input.author_name, authorId);
@@ -303,6 +312,10 @@ export async function createPost(input: {
         author_avatar: avatar,
         content: input.content,
         images,
+        author_kind: input.author_kind ?? 'human',
+        agent_persona: input.agent_persona ?? null,
+        is_autonomous: input.is_autonomous ?? false,
+        autonomous_source: input.autonomous_source ?? null,
       })
       .select('*')
       .single();
@@ -319,6 +332,10 @@ export async function createPost(input: {
     created_at: new Date().toISOString(),
     reply_count: 0,
     like_count: 0,
+    author_kind: input.author_kind ?? 'human',
+    agent_persona: input.agent_persona ?? null,
+    is_autonomous: input.is_autonomous ?? false,
+    autonomous_source: (input.autonomous_source as any) ?? null,
   };
   mem().posts.push(p);
   return p;
@@ -1079,4 +1096,88 @@ export async function setDisplayName(userId: string, displayName: string): Promi
   await supabaseAdmin()
     .from('user_profiles')
     .upsert({ user_id: userId, display_name: displayName, updated_at: new Date().toISOString() });
+}
+
+// ===== Autonomous Agent Logs + Counters =====
+
+export async function logAgentActivity(input: {
+  agent_id: string;
+  action_type: string;
+  status: string;
+  target_post_id?: string | null;
+  created_post_id?: string | null;
+  created_reply_id?: string | null;
+  model?: string | null;
+  generated_content?: string | null;
+  quality_score?: number | null;
+  token_input?: number | null;
+  token_output?: number | null;
+  estimated_cost?: number | null;
+  latency_ms?: number | null;
+  error_message?: string | null;
+}): Promise<void> {
+  if (!usingDB()) return;
+  // fire-and-forget; don't await so callers aren't blocked
+  Promise.resolve(
+    supabaseAdmin().from('agent_activity_logs').insert(input)
+  ).then(({ error }: any) => {
+    if (error) console.warn('[agent-log]', error.message);
+  }).catch((e: unknown) => console.warn('[agent-log] failed', e));
+}
+
+export async function getAgentDailyCount(agentId: string): Promise<{ auto_posts_count: number; auto_replies_count: number }> {
+  if (!usingDB()) return { auto_posts_count: 0, auto_replies_count: 0 };
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await supabaseAdmin()
+    .from('agent_daily_counters')
+    .select('auto_posts_count, auto_replies_count')
+    .eq('agent_id', agentId)
+    .eq('date', today)
+    .single();
+  return { auto_posts_count: data?.auto_posts_count ?? 0, auto_replies_count: data?.auto_replies_count ?? 0 };
+}
+
+export async function incrementAgentDailyPost(agentId: string, costUsd = 0): Promise<void> {
+  if (!usingDB()) return;
+  const today = new Date().toISOString().slice(0, 10);
+  try {
+    // Try upsert: increment if row exists, insert if not
+    const { data: existing } = await supabaseAdmin()
+      .from('agent_daily_counters')
+      .select('id, auto_posts_count, estimated_cost')
+      .eq('agent_id', agentId)
+      .eq('date', today)
+      .single();
+    if (existing) {
+      await supabaseAdmin()
+        .from('agent_daily_counters')
+        .update({
+          auto_posts_count: (existing.auto_posts_count ?? 0) + 1,
+          estimated_cost: (existing.estimated_cost ?? 0) + costUsd,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existing.id);
+    } else {
+      await supabaseAdmin()
+        .from('agent_daily_counters')
+        .insert({ agent_id: agentId, date: today, auto_posts_count: 1, estimated_cost: costUsd });
+    }
+  } catch (err) {
+    console.warn('[agent-counter] failed', err);
+  }
+}
+
+export async function getGlobalAutonomousStats(): Promise<{ today_posts: number; today_replies: number; today_cost: number }> {
+  if (!usingDB()) return { today_posts: 0, today_replies: 0, today_cost: 0 };
+  const today = new Date().toISOString().slice(0, 10);
+  const { data } = await supabaseAdmin()
+    .from('agent_daily_counters')
+    .select('auto_posts_count, auto_replies_count, estimated_cost')
+    .eq('date', today);
+  const rows = data ?? [];
+  return {
+    today_posts: rows.reduce((s, r) => s + (r.auto_posts_count ?? 0), 0),
+    today_replies: rows.reduce((s, r) => s + (r.auto_replies_count ?? 0), 0),
+    today_cost: rows.reduce((s, r) => s + (r.estimated_cost ?? 0), 0),
+  };
 }
