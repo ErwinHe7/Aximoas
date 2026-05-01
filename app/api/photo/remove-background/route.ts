@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCurrentUser } from '@/lib/auth';
 
 export const runtime = 'nodejs';
 export const maxDuration = 60;
@@ -110,6 +111,15 @@ async function callClipdrop(imageFile: File, apiKey: string): Promise<ArrayBuffe
 // ─── Route handler ────────────────────────────────────────────────────────────
 
 export async function POST(req: NextRequest) {
+  // Auth check — must be signed in to use this tool
+  const user = await getCurrentUser().catch(() => null);
+  if (!user?.authenticated) {
+    return NextResponse.json(
+      { error: 'Sign in required. Create a free account to use Portrait Background.' },
+      { status: 401 }
+    );
+  }
+
   const removebgKey  = process.env.REMOVEBG_API_KEY;
   const photoroomKey = process.env.PHOTOROOM_API_KEY;
   const clipdropKey  = process.env.CLIPDROP_API_KEY;

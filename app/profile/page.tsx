@@ -105,8 +105,34 @@ export default async function ProfilePage() {
         </div>
       )}
 
-      {/* Photo background tool */}
-      <ProfilePhotoBackgroundTool />
+      {/* Photo background tool — sign-in required */}
+      {user.authenticated ? (
+        <ProfilePhotoBackgroundTool />
+      ) : (
+        <div
+          className="rounded-[22px] p-6 text-center space-y-3"
+          style={{ background: 'var(--lt-surface)', border: '1px solid var(--lt-border)' }}
+        >
+          <div className="text-3xl">🪪</div>
+          <h3 className="text-base font-semibold" style={{ color: 'var(--lt-text)' }}>
+            Portrait Background
+          </h3>
+          <p className="text-sm" style={{ color: 'var(--lt-muted)' }}>
+            Replace any portrait background with a clean solid color — white, red, blue, or gray.
+            Perfect for ID photos, headshots, and profile pictures.
+          </p>
+          <p className="text-xs" style={{ color: 'var(--lt-subtle)' }}>
+            Sign in to use this tool for free.
+          </p>
+          <Link
+            href="/auth/signin?next=/profile"
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+            style={{ background: 'var(--molt-shell)' }}
+          >
+            Sign in to use Portrait Background →
+          </Link>
+        </div>
+      )}
 
       {/* Agent roster */}
       <div>
