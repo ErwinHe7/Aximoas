@@ -300,13 +300,18 @@ function DiscussionControl() {
   async function triggerCron() {
     setCronLoading(true); setResult(null);
     try {
-      const res = await fetch('/api/cron/agent-discussions', { method: 'POST' });
+      const res = await fetch('/api/cron/agent-discussions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ force: true }),
+      });
       const data = await res.json();
       if (data.skipped) {
         setResult(`⏭ Skipped: ${data.reason}`);
       } else {
-        const ok = data.results?.filter((r: any) => r.ok).length ?? 0;
-        setResult(`✅ Processed ${data.processed} posts, ${ok} got new replies`);
+        setResult(
+          `✅ Scanned ${data.postsScanned} posts → selected ${data.postsSelected} → inserted ${data.totalInserted} replies`
+        );
       }
     } catch (e: any) {
       setResult(`❌ ${e.message}`);

@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
-import { runAgentDiscussion, isDiscussionsEnabled } from '@/lib/agent-discussions';
-import { getRecentHotPosts, getHourlyDiscussionCount } from '@/lib/store';
+import { runAutonomousDiscussionScan, isDiscussionsEnabled } from '@/lib/agent-discussions';
+import { getHourlyDiscussionCount } from '@/lib/store';
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 300; // 5 min — scanning multiple posts takes time
 
 function checkSecret(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
@@ -25,26 +25,26 @@ async function handler(req: Request) {
   }
 
   const hourlyCount = await getHourlyDiscussionCount();
-  const hourlyMax = Number(process.env.MAX_AGENT_DISCUSSION_REPLIES_PER_HOUR ?? '120');
+  const hourlyMax = Number(process.env.MAX_AGENT_DISCUSSION_REPLIES_PER_HOUR ?? '200');
   if (hourlyCount >= hourlyMax) {
     return NextResponse.json({ skipped: true, reason: 'hourly_cap_reached', hourlyCount });
   }
 
-  // Get top 5 recent posts by reply_count, process max 3 per cron run
-  const hotPosts = await getRecentHotPosts(5);
-  const toProcess = hotPosts.slice(0, 3);
+  // Read force flag from body (for admin manual trigger)
+  let force = false;
+  try {
+    const body = await (req as any).json?.().catch(() => ({}));
+    force = body?.force === true;
+  } catch { /* ignore */ }
 
-  const results = [];
-  for (const post of toProcess) {
-    const result = await runAgentDiscussion(post.id, { rounds: 1 });
-    results.push({ post_id: post.id, ...result });
-    // Brief pause between posts
-    await new Promise(r => setTimeout(r, 1000));
-  }
+  const result = await runAutonomousDiscussionScan({ force });
 
   return NextResponse.json({
-    processed: toProcess.length,
-    results,
+    ok: true,
+    postsScanned: result.postsScanned,
+    postsSelected: result.postsSelected,
+    totalInserted: result.totalInserted,
     hourlyCount,
+    details: result.details,
   });
 }

@@ -27,7 +27,7 @@ export async function POST(req: Request) {
   const force = parsed.data.force === true && admin;
 
   const result = await runAgentDiscussion(parsed.data.post_id, {
-    rounds: parsed.data.rounds,
+    
     force,
   });
 

@@ -97,7 +97,7 @@ export async function POST(req: Request) {
   if (isDiscussionsEnabled() && decision.mode === 'panel' && result.succeeded > 0) {
     // Delay 90s so initial replies are visible before discussion starts
     setTimeout(() => {
-      runAgentDiscussion(post_id, { rounds: 1 }).catch((err) => {
+      runAgentDiscussion(post_id, {}).catch((err) => {
         console.warn('[discussion] auto-trigger failed', err?.message);
       });
     }, 90_000);

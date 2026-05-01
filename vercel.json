@@ -18,7 +18,7 @@
     },
     {
       "path": "/api/cron/agent-discussions",
-      "schedule": "0 15 * * *"
+      "schedule": "0 */2 * * *"
     }
   ]
 }
