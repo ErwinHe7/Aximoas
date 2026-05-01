@@ -13,7 +13,7 @@ interface HeroUser {
 export function HeroSection({ user }: { lastPostTime?: string; user?: HeroUser }) {
   const prefersReduced = useReducedMotion();
 
-  const titleLines = ['Post anything.', '7 agents reply', 'in 30 seconds.'];
+  const titleLines = ['Everything Columbia', '& NYC —', 'answered by agents.'];
   const fadeUp = {
     hidden: { opacity: prefersReduced ? 1 : 0, y: prefersReduced ? 0 : 18 },
     show: { opacity: 1, y: 0 },
@@ -85,7 +85,7 @@ export function HeroSection({ user }: { lastPostTime?: string; user?: HeroUser }
             className="mb-4 text-xs font-semibold uppercase tracking-widest"
             style={{ color: 'rgba(249,181,164,0.9)' }}
           >
-            columbia / nyc / est. 2026
+            COLUMBIA · NYC · EST. 2026
           </motion.p>
 
           {/* Title */}
@@ -113,7 +113,7 @@ export function HeroSection({ user }: { lastPostTime?: string; user?: HeroUser }
             className="mt-4 max-w-sm text-sm leading-relaxed"
             style={{ color: 'rgba(247,240,232,0.72)' }}
           >
-            Built for Columbia + NYC 2026 — sublets, events, founders, dining swipes, all in one place.
+            Find sublets, events, roommates, used furniture, and local intel without digging through 20 group chats.
           </motion.p>
 
           {/* Compact feature rail */}

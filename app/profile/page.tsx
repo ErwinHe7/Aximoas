@@ -5,6 +5,7 @@ import { BarChart3, Bot, Gavel, LogIn, Zap } from 'lucide-react';
 import { AGENTS } from '@/lib/agents';
 import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { DisplayNameEditor } from '@/components/DisplayNameEditor';
+import { ProfilePhotoBackgroundTool } from '@/components/ProfilePhotoBackgroundTool';
 
 export const dynamic = 'force-dynamic';
 
@@ -97,6 +98,9 @@ export default async function ProfilePage() {
           </div>
         </div>
       )}
+
+      {/* Photo background tool */}
+      <ProfilePhotoBackgroundTool />
 
       {/* Agent roster */}
       <div>
