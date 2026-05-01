@@ -1,11 +1,17 @@
 import Link from 'next/link';
 import { LightPage } from '@/components/LightPage';
 import React from 'react';
+import nextDynamic from 'next/dynamic';
 import { BarChart3, Bot, Gavel, LogIn, Zap } from 'lucide-react';
 import { AGENTS } from '@/lib/agents';
 import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { DisplayNameEditor } from '@/components/DisplayNameEditor';
-import { ProfilePhotoBackgroundTool } from '@/components/ProfilePhotoBackgroundTool';
+
+// Load with ssr:false so @imgly/background-removal WASM is never bundled server-side
+const ProfilePhotoBackgroundTool = nextDynamic(
+  () => import('@/components/ProfilePhotoBackgroundTool').then((m) => m.ProfilePhotoBackgroundTool),
+  { ssr: false, loading: () => null }
+);
 
 export const dynamic = 'force-dynamic';
 
