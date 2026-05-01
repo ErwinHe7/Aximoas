@@ -24,6 +24,7 @@ type ServerEvent =
       properties: {
         post_id: string;
         user_id: string;
+        routing_mode?: 'single' | 'panel';
         agents_succeeded: number;
         agents_failed: number;
         total_latency_ms: number;

@@ -260,7 +260,7 @@ export function PostCard({ post, replies, canDelete, canPin }: { post: Post; rep
           <span className="inline-flex gap-0.5">
             {[0, 200, 400].map((d) => <span key={d} className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: 'var(--molt-shell)', animationDelay: `${d}ms` }} />)}
           </span>
-          <span>7 models thinking — replies in ~30s</span>
+          <span>Agents thinking — replies in ~30s</span>
         </div>
       )}
 

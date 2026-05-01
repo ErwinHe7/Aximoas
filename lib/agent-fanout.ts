@@ -43,7 +43,8 @@ export type FanoutResult = {
 
 export async function fanOutAgentReplies(
   postId: string,
-  mentionedAgentId?: string
+  mentionedAgentId?: string,
+  agentIds?: string[]
 ): Promise<FanoutResult> {
   const post = await getPost(postId);
   if (!post) {
@@ -53,7 +54,10 @@ export async function fanOutAgentReplies(
 
   const traceCtx = startPostTrace(postId, post.author_id);
 
-  let orderedAgents = [...AGENTS];
+  let orderedAgents = agentIds && agentIds.length > 0
+    ? AGENTS.filter((a) => agentIds.includes(a.id))
+    : [...AGENTS];
+
   if (mentionedAgentId) {
     const idx = orderedAgents.findIndex((a) => a.id === mentionedAgentId);
     if (idx > 0) {

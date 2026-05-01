@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { fanOutAgentReplies } from '@/lib/agent-fanout';
+import { getPost } from '@/lib/store';
+import { classifyQuery } from '@/lib/query-router';
 import { getCurrentUser } from '@/lib/auth';
 import { trackServerEvent } from '@/lib/observability/posthog-server';
 
@@ -18,20 +20,38 @@ export async function POST(req: Request) {
   const parsed = Input.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: 'invalid input' }, { status: 400 });
 
-  const [user, result] = await Promise.all([
+  const { post_id, mention } = parsed.data;
+
+  // Run router + user lookup in parallel — router needs post content
+  const [user, post] = await Promise.all([
     getCurrentUser().catch(() => null),
-    fanOutAgentReplies(parsed.data.post_id, parsed.data.mention).catch((err) => {
-      console.error('[fanout]', err);
-      return { succeeded: 0, failed: 7, totalLatencyMs: 0, totalCostUsd: 0 };
-    }),
+    getPost(post_id).catch(() => null),
   ]);
+
+  // Classify query intent (fails safe to panel)
+  const decision = post
+    ? await classifyQuery(post.content).catch(() => ({ mode: 'panel' as const, reasoning: 'fallback' }))
+    : { mode: 'panel' as const, reasoning: 'no post' };
+
+  const agentIds =
+    decision.mode === 'single' && 'single_agent_id' in decision && decision.single_agent_id
+      ? [decision.single_agent_id]
+      : undefined;
+
+  console.log(`[fanout] post=${post_id} mode=${decision.mode} agents=${agentIds ?? 'all'}`);
+
+  const result = await fanOutAgentReplies(post_id, mention, agentIds).catch((err) => {
+    console.error('[fanout]', err);
+    return { succeeded: 0, failed: agentIds ? agentIds.length : 7, totalLatencyMs: 0, totalCostUsd: 0 };
+  });
 
   try {
     trackServerEvent(user?.id ?? 'anonymous', {
       event: 'agents_responded',
       properties: {
-        post_id: parsed.data.post_id,
+        post_id,
         user_id: user?.id ?? 'anonymous',
+        routing_mode: decision.mode,
         agents_succeeded: result.succeeded,
         agents_failed: result.failed,
         total_latency_ms: result.totalLatencyMs,
@@ -42,5 +62,5 @@ export async function POST(req: Request) {
     // non-blocking
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json({ ...result, routing_mode: decision.mode });
 }
