@@ -79,10 +79,18 @@ async function callRemoveBg(imageFile: File, apiKey: string): Promise<ArrayBuffe
 async function callPhotoroom(imageFile: File, apiKey: string): Promise<ArrayBuffer> {
   const fd = new FormData();
   fd.append('image_file', imageFile);
+  fd.append('format', 'png');
+  fd.append('channels', 'rgba');
+  fd.append('size', 'full');
+  fd.append('crop', 'false');
+  fd.append('despill', 'false');
 
-  const res = await fetch('https://image-api.photoroom.com/v2/segment', {
+  const res = await fetch('https://sdk.photoroom.com/v1/segment', {
     method: 'POST',
-    headers: { 'x-api-key': apiKey },
+    headers: {
+      'x-api-key': apiKey,
+      Accept: 'image/png',
+    },
     body: fd,
   });
   if (!res.ok) {
@@ -154,18 +162,32 @@ export async function POST(req: NextRequest) {
 
   // Caller can request a specific provider or skip already-tried ones
   const bodyText = formData.get('options') as string | null;
-  let options: { preferredProvider?: Provider; skipProviders?: Provider[]; qualityMode?: 'fast' | 'best' } = {};
+  let options: {
+    preferredProvider?: 'auto' | Provider;
+    skipProviders?: Provider[];
+    qualityMode?: 'fast' | 'best';
+    strictProvider?: boolean;  // if true, only try preferredProvider (no fallback)
+  } = {};
   if (bodyText) { try { options = JSON.parse(bodyText); } catch { /* ignore */ } }
 
   const skipSet = new Set<Provider>(options.skipProviders ?? []);
   const qualityMode = options.qualityMode ?? 'best';
 
-  // Build provider order: preferred first, then default order, skip already-tried
   const defaultOrder: Provider[] = ['removebg', 'photoroom', 'clipdrop'];
-  let order: Provider[] = options.preferredProvider
-    ? [options.preferredProvider, ...defaultOrder.filter(p => p !== options.preferredProvider)]
-    : defaultOrder;
-  order = order.filter(p => configuredProviders.includes(p) && !skipSet.has(p));
+
+  // If user explicitly chose a specific provider (not 'auto'), only try that one
+  const preferred = options.preferredProvider;
+  const isSpecific = preferred && preferred !== 'auto' && configuredProviders.includes(preferred as Provider);
+
+  let order: Provider[];
+  if (isSpecific) {
+    order = [preferred as Provider]; // strict: only the chosen provider
+  } else {
+    order = preferred && preferred !== 'auto'
+      ? [preferred as Provider, ...defaultOrder.filter(p => p !== preferred)]
+      : defaultOrder;
+    order = order.filter(p => configuredProviders.includes(p) && !skipSet.has(p));
+  }
 
   if (order.length === 0) {
     return NextResponse.json(
@@ -174,39 +196,43 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const QUALITY_THRESHOLD = 0.55; // minimum acceptable quality
+  const QUALITY_THRESHOLD = 0.55;
   const results: ProviderResult[] = [];
   const errors: string[] = [];
 
   for (const provider of order) {
     let pngBuffer: ArrayBuffer;
     try {
-      if (provider === 'removebg')  pngBuffer = await callRemoveBg(imageFile, removebgKey!);
+      if (provider === 'removebg')       pngBuffer = await callRemoveBg(imageFile, removebgKey!);
       else if (provider === 'photoroom') pngBuffer = await callPhotoroom(imageFile, photoroomKey!);
-      else pngBuffer = await callClipdrop(imageFile, clipdropKey!);
+      else                               pngBuffer = await callClipdrop(imageFile, clipdropKey!);
     } catch (err: any) {
-      errors.push(`${provider}: ${err?.message ?? 'failed'}`);
+      const label = provider.charAt(0).toUpperCase() + provider.slice(1);
+      errors.push(`${label} failed: ${err?.message?.slice(0, 120) ?? 'unknown error'}`);
+      // If user explicitly picked this provider, stop here (don't silently fallback)
+      if (isSpecific) break;
       continue;
     }
 
     const quality = await scoreCutout(pngBuffer, imageFile.size);
+    results.push({ provider, pngBuffer, qualityScore: quality.score, bgResidueRatio: quality.bgResidueRatio, warnings: quality.warnings });
 
-    results.push({
-      provider,
-      pngBuffer,
-      qualityScore: quality.score,
-      bgResidueRatio: quality.bgResidueRatio,
-      warnings: quality.warnings,
-    });
+    // Specific provider: always take the result (user chose it consciously)
+    // Auto mode: continue if below threshold and more providers exist
+    if (isSpecific || qualityMode === 'fast' || quality.score >= QUALITY_THRESHOLD) break;
+  }
 
-    // In 'fast' mode: take first success
-    // In 'best' mode: continue if quality is below threshold and more providers exist
-    if (qualityMode === 'fast' || quality.score >= QUALITY_THRESHOLD) break;
+  // If specific provider failed, return clear error without wiping existing result
+  if (results.length === 0 && isSpecific && errors.length > 0) {
+    return NextResponse.json(
+      { error: errors[0], preserveExisting: true },
+      { status: 422 }
+    );
   }
 
   if (results.length === 0) {
     return NextResponse.json(
-      { error: `All providers failed: ${errors.join('; ')}` },
+      { error: errors.length > 0 ? errors.join('; ') : 'All providers failed.' },
       { status: 502 }
     );
   }
@@ -225,10 +251,10 @@ export async function POST(req: NextRequest) {
   if (best.warnings.length > 0) {
     headers['X-Quality-Warnings'] = best.warnings.join(',');
   }
-  if (configuredProviders.length > 1) {
-    const remaining = order.filter(p => p !== best.provider);
-    if (remaining.length > 0) headers['X-Available-Fallbacks'] = remaining.join(',');
-  }
+  // Always report all configured providers so frontend can show them
+  headers['X-Configured-Providers'] = configuredProviders.join(',');
+  const remaining = configuredProviders.filter(p => p !== best.provider);
+  if (remaining.length > 0) headers['X-Available-Fallbacks'] = remaining.join(',');
 
   return new NextResponse(best.pngBuffer, { status: 200, headers });
 }
