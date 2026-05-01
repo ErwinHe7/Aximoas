@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, MapPin, MessageSquare, Tag } from 'lucide-react';
 import { LightPage } from '@/components/LightPage';
 import { BidPanel } from '@/components/BidPanel';
+import { ListingAskAI } from '@/components/ListingAskAI';
 import { getCurrentUser } from '@/lib/auth';
 import { formatCents, timeAgo } from '@/lib/format';
 import { getListing, getTransactionByListing } from '@/lib/store';
@@ -95,6 +96,8 @@ export default async function ListingDetail({ params }: { params: { id: string }
         )}
 
         <BidPanel listing={publicListing} user={publicUser} />
+
+        <ListingAskAI listing={publicListing} />
       </div>
     </LightPage>
   );

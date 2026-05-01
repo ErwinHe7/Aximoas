@@ -267,7 +267,7 @@ export function PostCard({ post, replies, canDelete, canPin }: { post: Post; rep
       {showAgentReplies && agentReplies.length > 0 && (
         <div className="mt-3 space-y-2 border-t pt-3" style={{ borderColor: 'var(--lt-border)' }}>
           {agentReplies.map((r, i) => (
-            <AgentReplyCard key={r.id} reply={{ ...r, author_name: resolveAgentName(r) }} index={i} />
+            <AgentReplyCard key={r.id} reply={{ ...r, author_name: resolveAgentName(r) }} index={i} isSoleReply={agentReplies.length === 1} />
           ))}
         </div>
       )}

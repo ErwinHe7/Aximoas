@@ -49,9 +49,9 @@ function confidenceTone(score: number | null) {
   return { label: `${(score * 100).toFixed(0)}%`, color: '#991B1B' };
 }
 
-interface Props { reply: Reply; index?: number; }
+interface Props { reply: Reply; index?: number; isSoleReply?: boolean; }
 
-export function AgentReplyCard({ reply, index = 0 }: Props) {
+export function AgentReplyCard({ reply, index = 0, isSoleReply = false }: Props) {
   const [up, setUp] = useState(reply.up_count ?? 0);
   const [down, setDown] = useState(reply.down_count ?? 0);
   const [myVote, setMyVote] = useState<0 | 1 | -1>(0);
@@ -161,6 +161,11 @@ export function AgentReplyCard({ reply, index = 0 }: Props) {
               <ThumbsDown className="h-3 w-3" /> {down}
             </button>
             <span className="ml-auto flex items-center gap-2">
+              {isSoleReply && agent && (
+                <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium" style={{ background: `${bar}18`, color: bar }}>
+                  answered by {agent.name}
+                </span>
+              )}
               {agent?.model && (
                 <span className="hidden sm:inline font-mono text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded" style={{ background: 'rgba(0,0,0,0.05)', color: 'var(--lt-muted)' }}>
                   {agent.model.split('/').pop()}
