@@ -490,22 +490,46 @@ export async function createReply(input: {
       ? `agent-${input.agent_persona ?? 'unknown'}`
       : input.author_id ?? `guest-${randomUUID()}`;
   if (usingDB()) {
-    const { data, error } = await supabaseAdmin()
+    const baseReplyPayload = {
+      post_id: input.post_id,
+      author_kind: input.author_kind,
+      author_id: resolvedAuthorId,
+      author_name: input.author_name,
+      author_avatar: input.author_avatar ?? null,
+      agent_persona: input.agent_persona ?? null,
+      content: input.content,
+      confidence_score: input.confidence_score ?? null,
+      visibility,
+    };
+    const fullReplyPayload = {
+      ...baseReplyPayload,
+      is_autonomous: input.is_autonomous ?? false,
+    };
+
+    let data: any = null;
+    let error: any = null;
+
+    ({ data, error } = await supabaseAdmin()
       .from('replies')
-      .insert({
-        post_id: input.post_id,
-        author_kind: input.author_kind,
-        author_id: resolvedAuthorId,
-        author_name: input.author_name,
-        author_avatar: input.author_avatar ?? null,
-        agent_persona: input.agent_persona ?? null,
-        content: input.content,
-        confidence_score: input.confidence_score ?? null,
-        visibility,
-        is_autonomous: input.is_autonomous ?? false,
-      })
+      .insert(fullReplyPayload)
       .select('*')
-      .single();
+      .single());
+
+    // Fallback: if is_autonomous column doesn't exist (migration 009 not yet run),
+    // retry with base payload only so agent replies still work
+    if (error) {
+      const msg: string = error?.message ?? '';
+      const isMissingCol = msg.includes('is_autonomous') || msg.includes('schema cache') ||
+        (msg.includes('column') && msg.includes('not found'));
+      if (isMissingCol) {
+        ({ data, error } = await supabaseAdmin()
+          .from('replies')
+          .insert(baseReplyPayload)
+          .select('*')
+          .single());
+      }
+    }
+
     if (error) throw error;
     await supabaseAdmin().rpc('increment_post_reply', { p_id: input.post_id }).throwOnError().then(() => {}, () => {});
     return mapReply(data);
