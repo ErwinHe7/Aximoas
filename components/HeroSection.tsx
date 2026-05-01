@@ -44,30 +44,9 @@ export function HeroSection({ user }: { lastPostTime?: string; user?: HeroUser }
         }}
       />
 
-      {/* AXIO7 logo block — right side, top aligned with the title lines */}
-      <div
-        aria-hidden
-        className="absolute right-0 hidden aspect-square w-[38%] max-w-[380px] items-center justify-center md:flex"
-        style={{
-          top: '4.5rem',        /* visually aligns with "Everything Columbia" first line */
-          height: '38vw',
-          maxHeight: '380px',   /* stops before the Live demo section */
-          background: 'rgba(247,240,232,0.055)',
-          border: '1px solid rgba(247,240,232,0.11)',
-          boxShadow: 'inset 0 0 0 1px rgba(216,71,39,0.08)',
-        }}
-      >
-        <img
-          src="/logo.png"
-          alt=""
-          className="aspect-square w-[72%] max-w-[280px] select-none object-contain"
-          style={{ opacity: 0.24 }}
-        />
-      </div>
-
-      <div className="relative flex items-center px-8 sm:px-12">
+      <div className="relative flex items-start gap-0 px-8 sm:px-12">
         <motion.div
-          className="relative z-10 w-full max-w-[34rem]"
+          className="relative z-10 w-full max-w-[34rem] flex-shrink-0"
           initial="hidden"
           animate="show"
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
@@ -210,6 +189,28 @@ export function HeroSection({ user }: { lastPostTime?: string; user?: HeroUser }
             <span className="text-xs" style={{ color: 'rgba(247,240,232,0.55)' }}>7 agents ready</span>
           </motion.div>
         </motion.div>
+
+        {/* AXIO7 logo — sits to the right of the title, aligned with "Everything Columbia" */}
+        <div
+          aria-hidden
+          className="hidden md:flex flex-shrink-0 items-center justify-center self-start ml-0"
+          style={{
+            width: '38%',
+            maxWidth: '400px',
+            aspectRatio: '1 / 1',
+            marginTop: '7.5rem',   /* skip past lobster + eyebrow to align with title */
+            background: 'rgba(247,240,232,0.055)',
+            border: '1px solid rgba(247,240,232,0.11)',
+            boxShadow: 'inset 0 0 0 1px rgba(216,71,39,0.08)',
+          }}
+        >
+          <img
+            src="/logo.png"
+            alt=""
+            className="aspect-square w-[72%] max-w-[280px] select-none object-contain"
+            style={{ opacity: 0.24 }}
+          />
+        </div>
       </div>
 
       {/* Featured panel-mode demo — always visible */}

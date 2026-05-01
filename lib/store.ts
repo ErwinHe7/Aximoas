@@ -305,21 +305,51 @@ export async function createPost(input: {
     `https://api.dicebear.com/9.x/thumbs/svg?seed=${encodeURIComponent(name)}`;
   const images = input.images ?? [];
   if (usingDB()) {
-    const { data, error } = await supabaseAdmin()
+    // Try with autonomous fields first (requires migration 008).
+    // If the columns don't exist yet, fall back to base fields only.
+    const basePayload = {
+      author_id: authorId,
+      author_name: name,
+      author_avatar: avatar,
+      content: input.content,
+      images,
+    };
+    const fullPayload = {
+      ...basePayload,
+      author_kind: input.author_kind ?? 'human',
+      agent_persona: input.agent_persona ?? null,
+      is_autonomous: input.is_autonomous ?? false,
+      autonomous_source: input.autonomous_source ?? null,
+    };
+
+    let data: any = null;
+    let error: any = null;
+
+    ({ data, error } = await supabaseAdmin()
       .from('posts')
-      .insert({
-        author_id: authorId,
-        author_name: name,
-        author_avatar: avatar,
-        content: input.content,
-        images,
-        author_kind: input.author_kind ?? 'human',
-        agent_persona: input.agent_persona ?? null,
-        is_autonomous: input.is_autonomous ?? false,
-        autonomous_source: input.autonomous_source ?? null,
-      })
+      .insert(fullPayload)
       .select('*')
-      .single();
+      .single());
+
+    // If error mentions missing column (migration 008 not yet run), retry with base payload
+    if (error) {
+      const msg: string = error?.message ?? '';
+      const isMissingCol = msg.includes('column') && (
+        msg.includes('agent_persona') ||
+        msg.includes('is_autonomous') ||
+        msg.includes('autonomous_source') ||
+        msg.includes('author_kind') ||
+        msg.includes('schema cache')
+      );
+      if (isMissingCol) {
+        ({ data, error } = await supabaseAdmin()
+          .from('posts')
+          .insert(basePayload)
+          .select('*')
+          .single());
+      }
+    }
+
     if (error) throw error;
     return mapPost(data);
   }

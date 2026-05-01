@@ -12,6 +12,13 @@ const BG_OPTIONS = [
 
 type Status = 'idle' | 'uploading' | 'done' | 'error';
 type BrushMode = 'erase' | 'restore';
+type ExportFormat = 'png' | 'jpg' | 'webp';
+
+const FORMAT_OPTIONS: { label: string; value: ExportFormat; mime: string; ext: string }[] = [
+  { label: 'PNG',  value: 'png',  mime: 'image/png',  ext: 'png'  },
+  { label: 'JPG',  value: 'jpg',  mime: 'image/jpeg', ext: 'jpg'  },
+  { label: 'WebP', value: 'webp', mime: 'image/webp', ext: 'webp' },
+];
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -82,7 +89,7 @@ function renderPreview(mc: HTMLCanvasElement, pc: HTMLCanvasElement, bgColor: st
   pCtx.putImageData(out, 0, 0);
 }
 
-function exportFullRes(mc: HTMLCanvasElement, origImg: HTMLImageElement, bgColor: string): string {
+function exportFullRes(mc: HTMLCanvasElement, origImg: HTMLImageElement, bgColor: string, mime = 'image/png', quality = 0.97): string {
   const [bgR, bgG, bgB] = hexToRgb(bgColor);
   const fW = origImg.naturalWidth; const fH = origImg.naturalHeight;
   const pW = mc.width; const pH = mc.height;
@@ -110,7 +117,7 @@ function exportFullRes(mc: HTMLCanvasElement, origImg: HTMLImageElement, bgColor
     }
   }
   oCtx.putImageData(od, 0, 0);
-  return oc.toDataURL('image/png');
+  return oc.toDataURL(mime, quality);
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -123,6 +130,7 @@ export function ProfilePhotoBackgroundTool() {
   const [stage, setStage] = useState('');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [refineMode, setRefineMode] = useState(false);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('png');
   const [brushMode, setBrushMode] = useState<BrushMode>('erase');
   const [brushSize, setBrushSize] = useState(24);
 
@@ -232,10 +240,13 @@ export function ProfilePhotoBackgroundTool() {
 
   function download() {
     const mc = maskRef.current; const orig = origImgRef.current;
-    if (!mc||!orig) return;
+    if (!mc || !orig) return;
+    const fmt = FORMAT_OPTIONS.find(f => f.value === exportFormat)!;
+    const quality = exportFormat === 'png' ? undefined : 0.97;
+    const dataUrl = exportFullRes(mc, orig, bgColor, fmt.mime, quality);
     const a = document.createElement('a');
-    a.href = exportFullRes(mc, orig, bgColor);
-    a.download = 'axio7-portrait-background.png';
+    a.href = dataUrl;
+    a.download = `axio7-portrait-background.${fmt.ext}`;
     a.click();
   }
 
@@ -348,10 +359,27 @@ export function ProfilePhotoBackgroundTool() {
             </>)}
           </div>
 
+          {/* Format selector */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-medium flex-shrink-0" style={{ color: 'var(--lt-muted)' }}>Format:</span>
+            <div className="flex gap-1.5">
+              {FORMAT_OPTIONS.map(f => (
+                <button key={f.value} onClick={() => setExportFormat(f.value)}
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
+                  style={exportFormat === f.value
+                    ? { background: 'var(--molt-shell)', color: 'white' }
+                    : { background: 'rgba(0,0,0,0.06)', color: 'var(--lt-muted)' }}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <button onClick={download}
             className="flex w-full items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-white transition hover:opacity-90"
-            style={{ background:'var(--molt-shell)' }}>
-            <Download className="h-4 w-4" /> Download full-resolution PNG
+            style={{ background: 'var(--molt-shell)' }}>
+            <Download className="h-4 w-4" />
+            Download {FORMAT_OPTIONS.find(f => f.value === exportFormat)?.label} (full resolution)
           </button>
           <p className="text-[11px] text-center" style={{ color:'var(--lt-subtle)' }}>
             For official documents, review carefully. AXIO7 does not guarantee government approval.
