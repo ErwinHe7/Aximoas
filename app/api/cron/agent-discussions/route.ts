@@ -44,7 +44,9 @@ async function handler(req: Request) {
     postsScanned: result.postsScanned,
     postsSelected: result.postsSelected,
     totalInserted: result.totalInserted,
+    agentPostsPublished: result.agentPostsPublished,
     hourlyCount,
     details: result.details,
+    agentPosts: result.agentPosts,
   });
 }

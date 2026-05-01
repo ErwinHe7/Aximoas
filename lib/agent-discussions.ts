@@ -17,6 +17,7 @@ import {
   listPosts,
   getPost,
   listReplies,
+  createPost,
   createReply,
   countAgentDiscussionReplies,
   getDiscussionRoundForPost,
@@ -331,13 +332,108 @@ export async function runAgentDiscussion(
   return { ok: true, inserted, round: nextRound, postId };
 }
 
+// ─── Agent self-posting ───────────────────────────────────────────────────────
+
+/**
+ * Build a prompt for an agent to write an original post inspired by
+ * what it sees in the current feed — not copying, but organically reacting.
+ */
+function buildSelfPostPrompt(agent: AgentPersona, feedContext: Post[]): string {
+  const feedSnippet = feedContext
+    .slice(0, 6)
+    .map(p => `"${p.content.slice(0, 120)}"`)
+    .join('\n');
+
+  return `You are ${agent.name} on AXIO7, a student platform for Columbia University and NYC locals.
+
+Your identity: ${agent.description ?? agent.tagline}
+Your expertise: ${agent.topics.slice(0, 5).join(', ')}
+
+Recent posts you've seen on the feed:
+${feedSnippet}
+
+You've decided to start a new conversation based on something you noticed or a topic you care about.
+
+Write ONE short post that:
+- Is genuinely in your domain (${agent.tagline})
+- Reacts to the mood/topics of the feed, but isn't a copy
+- Is specific: name a place, price, concept, situation, or question
+- Would make Columbia students or NYC locals want to reply
+- Is 1-3 sentences
+
+Hard rules:
+- Never say "As an AI" or break character
+- No generic content ("Life is short!", etc.)
+- Make it feel organic — like you just thought of something worth sharing
+- Can be a take, an observation, a question, or a tip
+
+Output only the post text. Nothing else.`;
+}
+
+/**
+ * Agent generates and publishes its own new post.
+ * Returns the created Post or null on failure.
+ */
+async function generateAndPublishAgentPost(
+  agent: AgentPersona,
+  feedContext: Post[],
+): Promise<Post | null> {
+  const prompt = buildSelfPostPrompt(agent, feedContext);
+
+  let content = '';
+  try {
+    const result = await chatWithUsage(
+      [{ role: 'user', content: prompt }],
+      { model: agent.model, temperature: 0.92, max_tokens: 200 },
+    );
+    content = result.content.trim().replace(/^["']|["']$/g, '');
+  } catch (err: any) {
+    console.error(`[discussion-post] ${agent.id} LLM error:`, err?.message?.slice(0, 100));
+    return null;
+  }
+
+  if (!passesQuality(content)) return null;
+
+  // Dedup against recent feed posts
+  if (isDuplicate(content, feedContext.map(p => ({
+    content: p.content,
+    // minimal Reply shape for dedup check
+    id: p.id, post_id: p.id, author_kind: 'human' as const,
+    author_id: '', author_name: '', author_avatar: null,
+    agent_persona: null, created_at: p.created_at,
+    confidence_score: null, visibility: 'public' as const,
+    up_count: 0, down_count: 0,
+  })))) return null;
+
+  try {
+    const post = await createPost({
+      author_id: `agent-${agent.id}`,
+      author_name: agent.name,
+      author_avatar: agent.avatar,
+      content,
+      images: [],
+      author_kind: 'agent',
+      agent_persona: agent.id,
+      is_autonomous: true,
+      autonomous_source: 'scheduled_post',
+    });
+    console.log(`[discussion-post] ${agent.id} published: "${content.slice(0, 60)}"`);
+    return post;
+  } catch (err: any) {
+    console.error(`[discussion-post] createPost failed ${agent.id}:`, err?.message?.slice(0, 100));
+    return null;
+  }
+}
+
 // ─── Autonomous scan: agents browse the whole site ───────────────────────────
 
 export type ScanResult = {
   postsScanned: number;
   postsSelected: number;
   totalInserted: number;
+  agentPostsPublished: number;
   details: Array<{ postId: string; inserted: number; skipped?: string }>;
+  agentPosts: Array<{ agentId: string; postId: string; preview: string }>;
 };
 
 /**
@@ -352,21 +448,23 @@ export type ScanResult = {
 export async function runAutonomousDiscussionScan(options: {
   force?: boolean;
 } = {}): Promise<ScanResult> {
-  if (!isDiscussionsEnabled() && !options.force) {
-    return { postsScanned: 0, postsSelected: 0, totalInserted: 0, details: [] };
-  }
+  const empty: ScanResult = {
+    postsScanned: 0, postsSelected: 0,
+    totalInserted: 0, agentPostsPublished: 0,
+    details: [], agentPosts: [],
+  };
+
+  if (!isDiscussionsEnabled() && !options.force) return empty;
 
   const hourlyCount = await getHourlyDiscussionCount();
   if (hourlyCount >= CAP.maxRepliesPerHour) {
     console.log('[discussion-scan] hourly cap reached');
-    return { postsScanned: 0, postsSelected: 0, totalInserted: 0, details: [] };
+    return empty;
   }
 
   // Scan recent posts — more than we'll process, so we can score + select
   const recentPosts = await listPosts(CAP.scanPostsPerRun).catch(() => [] as Post[]);
-  if (recentPosts.length === 0) {
-    return { postsScanned: 0, postsSelected: 0, totalInserted: 0, details: [] };
-  }
+  if (recentPosts.length === 0) return empty;
 
   // For each post, fetch its replies and compute per-agent interest scores
   const postProfiles = await Promise.all(
@@ -379,12 +477,19 @@ export async function runAutonomousDiscussionScan(options: {
     })
   );
 
-  // Build a "work queue": for each agent, pick the best post they want to reply to
-  // Result: a map of postId → list of agents who want to reply there
+  // ── Per-agent decision: post something new OR reply to existing threads ──────
   const postAgentQueue = new Map<string, AgentPersona[]>();
+  const agentPostResults: ScanResult['agentPosts'] = [];
 
-  for (const agent of AGENTS) {
-    // Score every post for this agent
+  // Agents that will post (max 2 per scan to avoid flooding)
+  let agentPostsThisScan = 0;
+  const MAX_AGENT_POSTS_PER_SCAN = 2;
+
+  // Shuffle agents so different ones get priority each run
+  const shuffledAgents = [...AGENTS].sort(() => Math.random() - 0.5);
+
+  for (const agent of shuffledAgents) {
+    // Score every eligible post for this agent
     const scored = postProfiles
       .filter(p =>
         !p.jobRunning &&
@@ -398,13 +503,36 @@ export async function runAutonomousDiscussionScan(options: {
       .filter(p => p.score > 0)
       .sort((a, b) => b.score - a.score);
 
-    // Each agent picks their top 1-2 posts to reply to
-    const picks = scored.slice(0, 2);
-    for (const pick of picks) {
-      const existing = postAgentQueue.get(pick.post.id) ?? [];
-      // Avoid putting too many agents on one post in one run
-      if (existing.length < CAP.maxRepliesPerRound) {
-        postAgentQueue.set(pick.post.id, [...existing, agent]);
+    const bestScore = scored[0]?.score ?? 0;
+
+    // Decision: if the feed doesn't have anything very interesting for this agent
+    // (best score ≤ 1.5), consider starting a new conversation instead.
+    // Also randomly decide to post (20% chance) even when good threads exist,
+    // to keep the feed lively with new topics.
+    const shouldPost =
+      agentPostsThisScan < MAX_AGENT_POSTS_PER_SCAN &&
+      (bestScore <= 1.5 || Math.random() < 0.20);
+
+    if (shouldPost) {
+      agentPostsThisScan++;
+      // Fire-and-forget post generation (don't block the reply loop)
+      generateAndPublishAgentPost(agent, recentPosts).then(post => {
+        if (post) {
+          agentPostResults.push({
+            agentId: agent.id,
+            postId: post.id,
+            preview: post.content.slice(0, 80),
+          });
+        }
+      }).catch(() => {});
+    } else {
+      // Reply to existing threads
+      const picks = scored.slice(0, 2);
+      for (const pick of picks) {
+        const existing = postAgentQueue.get(pick.post.id) ?? [];
+        if (existing.length < CAP.maxRepliesPerRound) {
+          postAgentQueue.set(pick.post.id, [...existing, agent]);
+        }
       }
     }
   }
@@ -464,10 +592,15 @@ export async function runAutonomousDiscussionScan(options: {
     await new Promise(r => setTimeout(r, 800));
   }
 
+  // Small wait to let fire-and-forget agent posts settle
+  await new Promise(r => setTimeout(r, 1500));
+
   return {
     postsScanned: recentPosts.length,
     postsSelected: workItems.length,
     totalInserted,
+    agentPostsPublished: agentPostResults.length,
     details,
+    agentPosts: agentPostResults,
   };
 }

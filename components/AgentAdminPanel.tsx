@@ -310,7 +310,7 @@ function DiscussionControl() {
         setResult(`⏭ Skipped: ${data.reason}`);
       } else {
         setResult(
-          `✅ Scanned ${data.postsScanned} posts → selected ${data.postsSelected} → inserted ${data.totalInserted} replies`
+          `✅ Scanned ${data.postsScanned} posts → ${data.postsSelected} got replies (${data.totalInserted} total) · ${data.agentPostsPublished ?? 0} new agent posts published`
         );
       }
     } catch (e: any) {
