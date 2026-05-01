@@ -23,6 +23,10 @@ function fromAddress() {
   return process.env.EMAIL_FROM ?? 'AXIO7 Trade <onboarding@resend.dev>';
 }
 
+export function isTradeEmailConfigured() {
+  return Boolean(process.env.RESEND_API_KEY);
+}
+
 function escapeHtml(value: string | null | undefined) {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
@@ -43,13 +47,13 @@ function htmlLine(label: string, value: string | null | undefined) {
 }
 
 function buildTextEmail({ listing, transaction }: TradeEmailInput) {
-  const dealUrl = `${siteUrl()}/trade/${listing.id}/thread?tx=${transaction.id}`;
+  const listingUrl = `${siteUrl()}/trade/${listing.id}`;
   return [
-    `AXIO7 Trade connection: ${listing.title}`,
+    `AXIO7 Trade introduction: ${listing.title}`,
     '',
     `Item: ${listing.title}`,
     `Deal amount: ${formatCents(transaction.amount_cents, listing.currency)}`,
-    `Listing URL: ${dealUrl}`,
+    `Listing URL: ${listingUrl}`,
     '',
     'Seller',
     line('Name', transaction.seller_name),
@@ -61,24 +65,24 @@ function buildTextEmail({ listing, transaction }: TradeEmailInput) {
     line('Email', transaction.buyer_email),
     line('Contact', transaction.buyer_contact),
     '',
-    'AXIO7 has connected both sides by email. Please confirm payment, pickup, delivery, and safety details directly.',
+    'AXIO7 sent this introduction to both sides. Please confirm payment, pickup, delivery, and safety details directly with each other.',
   ].join('\n');
 }
 
 function buildHtmlEmail({ listing, transaction }: TradeEmailInput) {
-  const dealUrl = `${siteUrl()}/trade/${listing.id}/thread?tx=${transaction.id}`;
+  const listingUrl = `${siteUrl()}/trade/${listing.id}`;
   const price = formatCents(transaction.amount_cents, listing.currency);
   return `
     <div style="font-family: Inter, Arial, sans-serif; background:#f7f0e8; padding:28px;">
       <div style="max-width:640px; margin:0 auto; background:#ffffff; border:1px solid #e9ded4; padding:24px;">
         <p style="margin:0 0 8px; color:#d84727; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase;">AXIO7 Trade</p>
-        <h1 style="margin:0 0 14px; color:#0a1520; font-size:24px; line-height:1.25;">You have a Trade connection</h1>
-        <p style="margin:0 0 18px; color:#4a4039;">Both sides are copied on this email so you can coordinate directly.</p>
+        <h1 style="margin:0 0 14px; color:#0a1520; font-size:24px; line-height:1.25;">You have a Trade introduction</h1>
+        <p style="margin:0 0 18px; color:#4a4039;">AXIO7 sent this introduction to both sides so you can coordinate directly.</p>
 
         <div style="padding:16px; background:#f8f4ee; border:1px solid #eee2d7; margin-bottom:18px;">
           <p style="margin:0 0 6px; color:#0a1520;"><strong>Item:</strong> ${escapeHtml(listing.title)}</p>
           <p style="margin:0 0 6px; color:#0a1520;"><strong>Deal amount:</strong> ${escapeHtml(price)}</p>
-          <p style="margin:0;"><a href="${escapeHtml(dealUrl)}" style="color:#d84727;">Open listing thread</a></p>
+          <p style="margin:0;"><a href="${escapeHtml(listingUrl)}" style="color:#d84727;">Open listing</a></p>
         </div>
 
         <div style="display:block; margin-bottom:16px;">
@@ -149,7 +153,7 @@ export async function sendTradeConnectionEmails(input: TradeEmailInput): Promise
     };
   }
 
-  if (!process.env.RESEND_API_KEY) {
+  if (!isTradeEmailConfigured()) {
     console.warn('[trade-email] RESEND_API_KEY is missing; skipping connection email.');
     return {
       ok: false,
