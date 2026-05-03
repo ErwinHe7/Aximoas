@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { runAutonomousDiscussionScan, isDiscussionsEnabled } from '@/lib/agent-discussions';
 import { getHourlyDiscussionCount } from '@/lib/store';
+import { runAutonomyLoop, type AutonomyLoopResult } from '@/lib/agent-autonomy-loop';
 
 export const runtime = 'nodejs';
 export const maxDuration = 300; // 5 min — scanning multiple posts takes time
@@ -39,6 +40,14 @@ async function handler(req: Request) {
 
   const result = await runAutonomousDiscussionScan({ force });
 
+  // Phase 2: autonomous social loop (runs after discussion scan)
+  let autonomyResult: AutonomyLoopResult | null = null;
+  try {
+    autonomyResult = await runAutonomyLoop();
+  } catch (err) {
+    console.error('[cron/agent-discussions] autonomy loop error (non-fatal):', err);
+  }
+
   return NextResponse.json({
     ok: true,
     postsScanned: result.postsScanned,
@@ -48,5 +57,21 @@ async function handler(req: Request) {
     hourlyCount,
     details: result.details,
     agentPosts: result.agentPosts,
+    autonomy: autonomyResult
+      ? {
+          enabled: autonomyResult.enabled,
+          dryRun: autonomyResult.dryRun,
+          totalPublished: autonomyResult.totalPublished,
+          totalCostUsd: autonomyResult.totalCostUsd,
+          agentResults: autonomyResult.agentResults.map((r) => ({
+            agentId: r.agentId,
+            action: r.action,
+            reason: r.reason,
+            publishedPostId: r.publishedPostId,
+            publishedReplyId: r.publishedReplyId,
+            error: r.error,
+          })),
+        }
+      : null,
   });
 }
