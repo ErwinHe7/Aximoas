@@ -43,7 +43,7 @@ export type ChatResult = {
 
 export async function chatWithUsage(
   messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
-  opts: { model?: string; temperature?: number; max_tokens?: number } = {}
+  opts: { model?: string; temperature?: number; max_tokens?: number; presence_penalty?: number } = {}
 ): Promise<ChatResult> {
   const tried = new Set<string>();
   const chain = [opts.model ?? DEFAULT_MODEL, ...FALLBACK_MODELS];
@@ -64,6 +64,7 @@ export async function chatWithUsage(
           model,
           temperature: opts.temperature ?? 0.8,
           max_tokens,
+          presence_penalty: opts.presence_penalty,
           messages,
         });
         const choice = res.choices[0];
@@ -101,7 +102,7 @@ export async function chatWithUsage(
 
 export async function chat(
   messages: { role: 'system' | 'user' | 'assistant'; content: string }[],
-  opts: { model?: string; temperature?: number; max_tokens?: number } = {}
+  opts: { model?: string; temperature?: number; max_tokens?: number; presence_penalty?: number } = {}
 ): Promise<string> {
   const result = await chatWithUsage(messages, opts);
   return result.content;

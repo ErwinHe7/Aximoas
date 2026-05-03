@@ -13,6 +13,8 @@
 
 import { AGENTS } from './agents';
 import { chatWithUsage } from './llm';
+import { Annotation, END, StateGraph } from '@langchain/langgraph';
+import { acquireDedupeKey, dedupeKeyForReply } from './agent-graph-utils';
 import {
   listPosts,
   getPost,
@@ -257,7 +259,7 @@ export type DiscussionResult =
   | { ok: true; inserted: number; round: number; postId: string }
   | { ok: false; reason: string };
 
-export async function runAgentDiscussion(
+async function runLegacyAgentDiscussion(
   postId: string,
   options: { force?: boolean } = {},
 ): Promise<DiscussionResult> {
@@ -330,6 +332,25 @@ export async function runAgentDiscussion(
   await finishDiscussionJob(jobId ?? '', inserted > 0 ? 'completed' : 'skipped', { inserted });
   console.log(`[discussion] post=${postId} round=${nextRound} inserted=${inserted}`);
   return { ok: true, inserted, round: nextRound, postId };
+}
+
+export async function runAgentDiscussion(
+  postId: string,
+  options: { force?: boolean } = {},
+): Promise<DiscussionResult> {
+  if (process.env.AGENT_GRAPH_DISCUSSIONS_ENABLED === 'true') {
+    let publishStarted = false;
+    try {
+      return await runAgentDiscussionGraph(postId, options, () => {
+        publishStarted = true;
+      });
+    } catch (error) {
+      console.error('[discussion:graph] failed', { postId, publishStarted, error });
+      if (!publishStarted) return await runLegacyAgentDiscussion(postId, options);
+      return { ok: false, reason: 'graph_failed_after_publish_started' };
+    }
+  }
+  return await runLegacyAgentDiscussion(postId, options);
 }
 
 // ─── Agent self-posting ───────────────────────────────────────────────────────
@@ -445,7 +466,7 @@ export type ScanResult = {
  * - Multiple agents can pick different posts in the same run
  * - Naturally spreads discussion across the whole feed
  */
-export async function runAutonomousDiscussionScan(options: {
+async function runLegacyAutonomousDiscussionScan(options: {
   force?: boolean;
 } = {}): Promise<ScanResult> {
   const empty: ScanResult = {
@@ -603,4 +624,374 @@ export async function runAutonomousDiscussionScan(options: {
     details,
     agentPosts: agentPostResults,
   };
+}
+
+type DiscussionOptions = { force?: boolean };
+
+type DiscussionProfile = {
+  post: Post;
+  replies: Reply[];
+  totalAgentReplies: number;
+  currentRound: number;
+  jobRunning: boolean;
+};
+
+async function createDiscussionReplyWithDedupe(input: {
+  postId: string;
+  agent: AgentPersona;
+  content: string;
+  round: number;
+  scope: string;
+  onPublishStarted?: () => void;
+}): Promise<Reply | null> {
+  const dedupeKey = dedupeKeyForReply(input.postId, input.agent.id, input.scope);
+  const acquired = await acquireDedupeKey(dedupeKey);
+  if (!acquired) {
+    console.log('[discussion:graph] duplicate prevented', { postId: input.postId, agentId: input.agent.id, dedupeKey });
+    return null;
+  }
+  input.onPublishStarted?.();
+  return await createReply({
+    post_id: input.postId,
+    author_kind: 'agent',
+    author_name: input.agent.name,
+    author_avatar: input.agent.avatar,
+    agent_persona: input.agent.id,
+    content: input.content,
+    confidence_score: 0.82,
+    visibility: 'public',
+    reply_type: 'agent_discussion',
+    discussion_round: input.round,
+    is_autonomous: true,
+  });
+}
+
+const DiscussionState = Annotation.Root({
+  postId: Annotation<string>(),
+  options: Annotation<DiscussionOptions>({ default: () => ({}), reducer: (_, v) => v }),
+  post: Annotation<Post | null>({ default: () => null, reducer: (_, v) => v }),
+  existingReplies: Annotation<Reply[]>({ default: () => [], reducer: (_, v) => v }),
+  currentRound: Annotation<number>({ default: () => 0, reducer: (_, v) => v }),
+  totalAgentReplies: Annotation<number>({ default: () => 0, reducer: (_, v) => v }),
+  nextRound: Annotation<number>({ default: () => 0, reducer: (_, v) => v }),
+  agents: Annotation<AgentPersona[]>({ default: () => [], reducer: (_, v) => v }),
+  inserted: Annotation<number>({ default: () => 0, reducer: (_, v) => v }),
+  publishStartedCallback: Annotation<(() => void) | undefined>({ default: () => undefined, reducer: (_, v) => v }),
+  result: Annotation<DiscussionResult | null>({ default: () => null, reducer: (_, v) => v }),
+});
+
+type DS = typeof DiscussionState.State;
+
+async function loadDiscussionContextNode(state: DS): Promise<Partial<DS>> {
+  if (!isDiscussionsEnabled() && !state.options.force) {
+    return { result: { ok: false, reason: 'discussions_disabled' } };
+  }
+  const hourlyCount = await getHourlyDiscussionCount();
+  if (hourlyCount >= CAP.maxRepliesPerHour) {
+    return { result: { ok: false, reason: 'global_hourly_cap_reached' } };
+  }
+  const post = await getPost(state.postId).catch(() => null);
+  if (!post) return { result: { ok: false, reason: 'post_not_found' } };
+  const [existingReplies, currentRound, totalAgentReplies, jobRunning] = await Promise.all([
+    listReplies(state.postId).catch(() => [] as Reply[]),
+    getDiscussionRoundForPost(state.postId),
+    countAgentDiscussionReplies(state.postId),
+    isDiscussionJobRunning(state.postId),
+  ]);
+  if (!state.options.force && jobRunning) return { result: { ok: false, reason: 'job_already_running' } };
+  if (totalAgentReplies >= CAP.maxTotalRepliesPerPost) return { result: { ok: false, reason: 'max_total_replies_reached' } };
+  const nextRound = currentRound + 1;
+  if (!state.options.force && nextRound > CAP.maxRoundsPerPost) return { result: { ok: false, reason: 'max_rounds_reached' } };
+  return { post, existingReplies, currentRound, totalAgentReplies, nextRound };
+}
+
+function routeDiscussionAfterLoad(state: DS): 'selectDiscussionAgents' | 'finishDiscussion' {
+  return state.result ? 'finishDiscussion' : 'selectDiscussionAgents';
+}
+
+async function selectDiscussionAgentsNode(state: DS): Promise<Partial<DS>> {
+  const agentCount = Math.min(CAP.maxRepliesPerRound, CAP.maxTotalRepliesPerPost - state.totalAgentReplies);
+  const agents = selectAgentsForPost(state.post!, state.existingReplies, agentCount);
+  if (agents.length === 0) return { result: { ok: false, reason: 'no_eligible_agents' } };
+  return { agents };
+}
+
+async function generateDiscussionRepliesNode(state: DS): Promise<Partial<DS>> {
+  const jobId = await createDiscussionJob(state.postId, state.nextRound).catch(() => null);
+  let inserted = 0;
+  let runningReplies = [...state.existingReplies];
+  for (const agent of state.agents) {
+    const { content, ok } = await generateOneReply(agent, state.post!, runningReplies, state.nextRound);
+    if (!ok || !content) {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      continue;
+    }
+    try {
+      const reply = await createDiscussionReplyWithDedupe({
+        postId: state.postId,
+        agent,
+        content,
+        round: state.nextRound,
+        scope: `discussion:${state.nextRound}`,
+        onPublishStarted: state.publishStartedCallback,
+      });
+      if (reply) {
+        runningReplies = [...runningReplies, reply];
+        inserted++;
+      }
+    } catch (error: any) {
+      console.error(`[discussion:graph] save failed ${agent.id}:`, error?.message?.slice(0, 100));
+    }
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
+  await finishDiscussionJob(jobId ?? '', inserted > 0 ? 'completed' : 'skipped', { inserted });
+  console.log(`[discussion:graph] post=${state.postId} round=${state.nextRound} inserted=${inserted}`);
+  return { inserted, result: { ok: true, inserted, round: state.nextRound, postId: state.postId } };
+}
+
+function finishDiscussionNode(): Partial<DS> {
+  return {};
+}
+
+const discussionWorkflow = new StateGraph(DiscussionState)
+  .addNode('loadDiscussionContext', loadDiscussionContextNode)
+  .addNode('selectDiscussionAgents', selectDiscussionAgentsNode)
+  .addNode('generateDiscussionReplies', generateDiscussionRepliesNode)
+  .addNode('finishDiscussion', finishDiscussionNode)
+  .addEdge('__start__', 'loadDiscussionContext')
+  .addConditionalEdges('loadDiscussionContext', routeDiscussionAfterLoad, {
+    selectDiscussionAgents: 'selectDiscussionAgents',
+    finishDiscussion: 'finishDiscussion',
+  })
+  .addEdge('selectDiscussionAgents', 'generateDiscussionReplies')
+  .addEdge('generateDiscussionReplies', 'finishDiscussion')
+  .addEdge('finishDiscussion', END);
+
+const discussionGraph = discussionWorkflow.compile();
+
+async function runAgentDiscussionGraph(
+  postId: string,
+  options: DiscussionOptions,
+  onPublishStarted?: () => void,
+): Promise<DiscussionResult> {
+  const finalState = await discussionGraph.invoke({ postId, options, publishStartedCallback: onPublishStarted });
+  return finalState.result ?? { ok: false, reason: 'graph_no_result' };
+}
+
+const ScanState = Annotation.Root({
+  options: Annotation<DiscussionOptions>({ default: () => ({}), reducer: (_, v) => v }),
+  recentPosts: Annotation<Post[]>({ default: () => [], reducer: (_, v) => v }),
+  postProfiles: Annotation<DiscussionProfile[]>({ default: () => [], reducer: (_, v) => v }),
+  workItems: Annotation<Array<{ postId: string; agents: AgentPersona[] }>>({ default: () => [], reducer: (_, v) => v }),
+  agentPostAgents: Annotation<AgentPersona[]>({ default: () => [], reducer: (_, v) => v }),
+  details: Annotation<ScanResult['details']>({ default: () => [], reducer: (_, v) => v }),
+  agentPosts: Annotation<ScanResult['agentPosts']>({ default: () => [], reducer: (_, v) => v }),
+  totalInserted: Annotation<number>({ default: () => 0, reducer: (_, v) => v }),
+  publishStartedCallback: Annotation<(() => void) | undefined>({ default: () => undefined, reducer: (_, v) => v }),
+  result: Annotation<ScanResult | null>({ default: () => null, reducer: (_, v) => v }),
+});
+
+type SS = typeof ScanState.State;
+
+function emptyScanResult(): ScanResult {
+  return {
+    postsScanned: 0,
+    postsSelected: 0,
+    totalInserted: 0,
+    agentPostsPublished: 0,
+    details: [],
+    agentPosts: [],
+  };
+}
+
+async function loadScanContextNode(state: SS): Promise<Partial<SS>> {
+  if (!isDiscussionsEnabled() && !state.options.force) return { result: emptyScanResult() };
+  const hourlyCount = await getHourlyDiscussionCount();
+  if (hourlyCount >= CAP.maxRepliesPerHour) {
+    console.log('[discussion-scan:graph] hourly cap reached');
+    return { result: emptyScanResult() };
+  }
+  const recentPosts = await listPosts(CAP.scanPostsPerRun).catch(() => [] as Post[]);
+  if (recentPosts.length === 0) return { result: emptyScanResult() };
+  const postProfiles = await Promise.all(
+    recentPosts.map(async (post) => {
+      const replies = await listReplies(post.id).catch(() => [] as Reply[]);
+      const totalAgentReplies = replies.filter((reply) => reply.author_kind === 'agent').length;
+      const currentRound = await getDiscussionRoundForPost(post.id).catch(() => 0);
+      const jobRunning = await isDiscussionJobRunning(post.id).catch(() => false);
+      return { post, replies, totalAgentReplies, currentRound, jobRunning };
+    }),
+  );
+  return { recentPosts, postProfiles };
+}
+
+function routeScanAfterLoad(state: SS): 'selectScanWork' | 'finishScan' {
+  return state.result ? 'finishScan' : 'selectScanWork';
+}
+
+function selectScanWorkNode(state: SS): Partial<SS> {
+  const postAgentQueue = new Map<string, AgentPersona[]>();
+  const agentPostAgents: AgentPersona[] = [];
+  let agentPostsThisScan = 0;
+  const maxAgentPostsPerScan = 2;
+  const shuffledAgents = [...AGENTS].sort(() => Math.random() - 0.5);
+
+  for (const agent of shuffledAgents) {
+    const scored = state.postProfiles
+      .filter((profile) =>
+        !profile.jobRunning &&
+        profile.totalAgentReplies < CAP.maxTotalRepliesPerPost &&
+        (state.options.force || profile.currentRound < CAP.maxRoundsPerPost)
+      )
+      .map((profile) => ({
+        ...profile,
+        score: agentInterestScore(agent, profile.post, profile.replies),
+      }))
+      .filter((profile) => profile.score > 0)
+      .sort((a, b) => b.score - a.score);
+
+    const bestScore = scored[0]?.score ?? 0;
+    const shouldPost =
+      agentPostsThisScan < maxAgentPostsPerScan &&
+      (bestScore <= 1.5 || Math.random() < 0.20);
+
+    if (shouldPost) {
+      agentPostsThisScan++;
+      agentPostAgents.push(agent);
+      continue;
+    }
+
+    for (const pick of scored.slice(0, 2)) {
+      const existing = postAgentQueue.get(pick.post.id) ?? [];
+      if (existing.length < CAP.maxRepliesPerRound) {
+        postAgentQueue.set(pick.post.id, [...existing, agent]);
+      }
+    }
+  }
+
+  const workItems = [...postAgentQueue.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .slice(0, CAP.maxPostsPerRun)
+    .map(([postId, agents]) => ({ postId, agents }));
+
+  console.log(`[discussion-scan:graph] scanned=${state.recentPosts.length} selected=${workItems.length} agents`);
+  return { workItems, agentPostAgents };
+}
+
+async function publishScanAgentPostsNode(state: SS): Promise<Partial<SS>> {
+  const agentPosts: ScanResult['agentPosts'] = [...state.agentPosts];
+  for (const agent of state.agentPostAgents) {
+    state.publishStartedCallback?.();
+    const post = await generateAndPublishAgentPost(agent, state.recentPosts).catch(() => null);
+    if (post) {
+      agentPosts.push({
+        agentId: agent.id,
+        postId: post.id,
+        preview: post.content.slice(0, 80),
+      });
+    }
+  }
+  return { agentPosts };
+}
+
+async function publishScanRepliesNode(state: SS): Promise<Partial<SS>> {
+  const details: ScanResult['details'] = [];
+  let totalInserted = state.totalInserted;
+
+  for (const item of state.workItems) {
+    const profile = state.postProfiles.find((candidate) => candidate.post.id === item.postId);
+    if (!profile) continue;
+    const nextRound = profile.currentRound + 1;
+    const jobId = await createDiscussionJob(item.postId, nextRound).catch(() => null);
+    let inserted = 0;
+    let runningReplies = [...profile.replies];
+
+    for (const agent of item.agents) {
+      const { content, ok } = await generateOneReply(agent, profile.post, runningReplies, nextRound);
+      if (!ok || !content) continue;
+      try {
+        const reply = await createDiscussionReplyWithDedupe({
+          postId: item.postId,
+          agent,
+          content,
+          round: nextRound,
+          scope: `discussion-scan:${nextRound}`,
+          onPublishStarted: state.publishStartedCallback,
+        });
+        if (reply) {
+          runningReplies = [...runningReplies, reply];
+          inserted++;
+          totalInserted++;
+        }
+      } catch (error: any) {
+        console.error(`[discussion-scan:graph] save failed ${agent.id}:`, error?.message?.slice(0, 80));
+      }
+      await new Promise((resolve) => setTimeout(resolve, 350));
+    }
+
+    await finishDiscussionJob(jobId ?? '', inserted > 0 ? 'completed' : 'skipped', { inserted });
+    details.push({ postId: item.postId, inserted });
+    console.log(`[discussion-scan:graph] post=${item.postId} inserted=${inserted}`);
+    await new Promise((resolve) => setTimeout(resolve, 800));
+  }
+
+  return { details, totalInserted };
+}
+
+function finishScanNode(state: SS): Partial<SS> {
+  if (state.result) return {};
+  return {
+    result: {
+      postsScanned: state.recentPosts.length,
+      postsSelected: state.workItems.length,
+      totalInserted: state.totalInserted,
+      agentPostsPublished: state.agentPosts.length,
+      details: state.details,
+      agentPosts: state.agentPosts,
+    },
+  };
+}
+
+const scanWorkflow = new StateGraph(ScanState)
+  .addNode('loadScanContext', loadScanContextNode)
+  .addNode('selectScanWork', selectScanWorkNode)
+  .addNode('publishScanAgentPosts', publishScanAgentPostsNode)
+  .addNode('publishScanReplies', publishScanRepliesNode)
+  .addNode('finishScan', finishScanNode)
+  .addEdge('__start__', 'loadScanContext')
+  .addConditionalEdges('loadScanContext', routeScanAfterLoad, {
+    selectScanWork: 'selectScanWork',
+    finishScan: 'finishScan',
+  })
+  .addEdge('selectScanWork', 'publishScanAgentPosts')
+  .addEdge('publishScanAgentPosts', 'publishScanReplies')
+  .addEdge('publishScanReplies', 'finishScan')
+  .addEdge('finishScan', END);
+
+const scanGraph = scanWorkflow.compile();
+
+async function runAutonomousDiscussionScanGraph(
+  options: DiscussionOptions,
+  onPublishStarted?: () => void,
+): Promise<ScanResult> {
+  const finalState = await scanGraph.invoke({ options, publishStartedCallback: onPublishStarted });
+  return finalState.result ?? emptyScanResult();
+}
+
+export async function runAutonomousDiscussionScan(options: {
+  force?: boolean;
+} = {}): Promise<ScanResult> {
+  if (process.env.AGENT_GRAPH_DISCUSSION_SCAN_ENABLED === 'true') {
+    let publishStarted = false;
+    try {
+      return await runAutonomousDiscussionScanGraph(options, () => {
+        publishStarted = true;
+      });
+    } catch (error) {
+      console.error('[discussion-scan:graph] failed', { publishStarted, error });
+      if (!publishStarted) return await runLegacyAutonomousDiscussionScan(options);
+      return emptyScanResult();
+    }
+  }
+  return await runLegacyAutonomousDiscussionScan(options);
 }

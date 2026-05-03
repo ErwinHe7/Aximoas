@@ -2,9 +2,11 @@ import * as Sentry from '@sentry/nextjs';
 import { AGENTS } from './agents';
 import { chatWithUsage } from './llm';
 import { cleanAgentReply, isNonAnswerReply } from './agent-output';
+import { buildFanoutContext } from './agent-fanout-context';
+import { acquireDedupeKey, dedupeKeyForReply } from './agent-graph-utils';
+import { runGraphFanoutAdapter } from './agent-fanout-graph';
 import { createReply, getPost, incrementLike, listListings } from './store';
 import { startPostTrace, tracedLLMCall, flushTraces, type TraceContext } from './observability/llm-tracer';
-import { detectEventIntent, searchEvents, formatEventsForAgentContext } from './events/search';
 import type { AgentPersona, Post } from './types';
 
 const HOUSING_KW   = ['sublet', 'rent', 'room', 'apartment', 'sublease', 'housing', 'roommate', 'lease', '转租', '找房'];
@@ -42,6 +44,40 @@ export type FanoutResult = {
 };
 
 export async function fanOutAgentReplies(
+  postId: string,
+  mentionedAgentId?: string,
+  agentIds?: string[]
+): Promise<FanoutResult> {
+  if (process.env.AGENT_GRAPH_FANOUT_ENABLED === 'true') {
+    let publishStarted = false;
+    try {
+      return await runGraphFanoutAdapter(postId, {
+        mentionedAgentId,
+        agentIds,
+        source: 'api',
+        onPublishStarted: () => {
+          publishStarted = true;
+        },
+      });
+    } catch (error) {
+      console.error('[fanout] graph_fanout_failed', { postId, publishStarted, error });
+      if (!publishStarted) {
+        console.warn('[fanout] graph_fanout_fallback_legacy', { postId });
+        return await runLegacyFanout(postId, mentionedAgentId, agentIds);
+      }
+      return {
+        succeeded: 0,
+        failed: Math.max(1, agentIds?.length ?? AGENTS.length),
+        totalLatencyMs: 0,
+        totalCostUsd: 0,
+      };
+    }
+  }
+
+  return await runLegacyFanout(postId, mentionedAgentId, agentIds);
+}
+
+export async function runLegacyFanout(
   postId: string,
   mentionedAgentId?: string,
   agentIds?: string[]
@@ -132,19 +168,12 @@ async function runOneAgent(
   traceCtx: TraceContext
 ): Promise<AgentRunResult> {
   try {
-    const [listingCtx, eventCtx] = await Promise.all([
-      buildListingContext(post.content),
-      detectEventIntent(post.content)
-        ? searchEvents(post.content, { limit: 4 })
-            .then(formatEventsForAgentContext)
-            .catch(() => '')
-        : Promise.resolve(''),
-    ]);
+    const context = await buildFanoutContext(post.content);
 
     const contextParts = [
       post.content,
-      listingCtx ?? '',
-      eventCtx ?? '',
+      context.tradeContext ?? '',
+      context.eventContext ?? '',
     ].filter(Boolean);
     const userContent = contextParts.join('\n\n');
 
@@ -176,6 +205,13 @@ async function runOneAgent(
 
     if (!trimmed || isNonAnswerReply(trimmed)) {
       return { ok: false, error: 'empty completion' };
+    }
+
+    const dedupeKey = dedupeKeyForReply(post.id, agent.id, 'fanout');
+    const acquired = await acquireDedupeKey(dedupeKey);
+    if (!acquired) {
+      console.log('[fanout] duplicate prevented', { postId: post.id, agentId: agent.id, dedupeKey });
+      return { ok: false, error: 'duplicate prevented' };
     }
 
     await Promise.all([
