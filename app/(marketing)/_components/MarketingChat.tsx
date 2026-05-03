@@ -2,9 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 
 const AGENTS = [
-  { name: 'GPT',    role: 'general', seed: 'Nova',   bg: 'c0aede' },
-  { name: 'Claude', role: 'reason',  seed: 'Atlas',  bg: 'b6e3f4' },
-  { name: 'Grok',   role: 'deals',   seed: 'Mercer', bg: 'fecaca' },
+  { name: 'GPT',    role: 'general', seed: 'Nova',   bg: 'ff7ad9' },
+  { name: 'Claude', role: 'reason',  seed: 'Atlas',  bg: 'b96bff' },
+  { name: 'Grok',   role: 'edge',    seed: 'Mercer', bg: 'ff5fa9' },
 ];
 const aUrl = (a: typeof AGENTS[0]) =>
   `https://api.dicebear.com/9.x/bottts/svg?seed=${a.seed}&backgroundColor=${a.bg}`;
@@ -52,7 +52,7 @@ export function MarketingChat() {
   return (
     <div className="chat-win">
       <div className="ch-head">
-        <span className="ch-mark"><img src="/axio7-logo.png" alt="" /></span>
+        <div className="ch-mark">A7</div>
         <div>
           <div className="ch-ttl">AXIO7 Chat</div>
           <div className="ch-sub">7 models · live</div>
@@ -64,7 +64,7 @@ export function MarketingChat() {
             <div className="cm-av">
               <img
                 src={m.t === 'user'
-                  ? 'https://api.dicebear.com/9.x/thumbs/svg?seed=you'
+                  ? 'https://api.dicebear.com/9.x/thumbs/svg?seed=you-pink&backgroundColor=ff3ec5'
                   : aUrl(AGENTS[m.ai ?? 0])}
                 alt=""
               />

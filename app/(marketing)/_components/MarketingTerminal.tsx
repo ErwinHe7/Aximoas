@@ -2,22 +2,22 @@
 import { useState, useEffect, useRef } from 'react';
 
 const AGENTS = [
-  { name: 'GPT',      seed: 'Nova',   bg: 'c0aede' },
-  { name: 'Claude',   seed: 'Atlas',  bg: 'b6e3f4' },
-  { name: 'DeepSeek', seed: 'Lumen',  bg: 'ffd5dc' },
-  { name: 'Nvidia',   seed: 'Ember',  bg: 'd1f4d1' },
-  { name: 'Qwen',     seed: 'Sage',   bg: 'fde68a' },
-  { name: 'Grok',     seed: 'Mercer', bg: 'fecaca' },
-  { name: 'Gemini',   seed: 'Iris',   bg: 'bfdbfe' },
+  { name: 'GPT',      seed: 'Nova',   bg: 'ff7ad9' },
+  { name: 'Claude',   seed: 'Atlas',  bg: 'b96bff' },
+  { name: 'DeepSeek', seed: 'Lumen',  bg: 'ffb3e9' },
+  { name: 'Nvidia',   seed: 'Ember',  bg: '8a3df0' },
+  { name: 'Qwen',     seed: 'Sage',   bg: 'ff3ec5' },
+  { name: 'Grok',     seed: 'Mercer', bg: 'ff5fa9' },
+  { name: 'Gemini',   seed: 'Iris',   bg: 'c084fc' },
 ];
 const aUrl = (a: typeof AGENTS[0]) =>
   `https://api.dicebear.com/9.x/bottts/svg?seed=${a.seed}&backgroundColor=${a.bg}`;
 
 const QUERIES = [
-  { q: 'Find a June sublet near Columbia, plus any used desks.', ai: 0, ans: 'Found 3 sublet listings near campus, $1,800–2,400/mo. Also 2 used desks in Trade — standing desk $120 near 116th St.' },
-  { q: "What's happening in NYC this weekend?",                  ai: 6, ans: '3 events: rooftop social Fri at 116th, art show Sat at MoMA (student discount), open mic Sun at Columbia Lion Den.' },
-  { q: 'Looking for a co-founder for my fintech startup.',       ai: 5, ans: '6 profiles in Founders feed with fintech background. I flagged 2 with strong matching signals.' },
-  { q: 'Dining swipes for sale? Cheapest?',                      ai: 4, ans: '2 offers: $8/swipe and $7.50 bulk. Both under 2h old — below average ($9), move fast.' },
+  { q: 'Find a June sublet near Columbia under $2k.', ai: 0, ans: 'Found 3 listings near campus, $1,800–2,000/mo. Top match: $1,800 at 116th, June 1 → Aug 31. Tap to connect.' },
+  { q: "What's worth doing in NYC this weekend?", ai: 6, ans: '3 events: rooftop social Fri at 116th, art show Sat at MoMA (student discount), open mic Sun at Lion Den.' },
+  { q: 'Looking for a co-founder for fintech.', ai: 5, ans: '6 profiles in Founders feed match. 2 have strong fintech signal — Columbia MBA + ex-trading background.' },
+  { q: 'Cheapest dining swipes on campus right now?', ai: 4, ans: 'Best deal: $7.50/swipe in bulk, posted 90m ago. Below the $9 average. Move fast.' },
 ];
 
 export function MarketingTerminal() {
@@ -32,17 +32,17 @@ export function MarketingTerminal() {
     const clr = () => { if (t.current) clearTimeout(t.current); };
     if (phase === 'q') {
       if (txt.length < cur.q.length) {
-        t.current = setTimeout(() => setTxt(cur.q.slice(0, txt.length + 1)), 36);
+        t.current = setTimeout(() => setTxt(cur.q.slice(0, txt.length + 1)), 34);
       } else {
-        t.current = setTimeout(() => { setLitAi(cur.ai); setPhase('pause'); }, 400);
+        t.current = setTimeout(() => { setLitAi(cur.ai); setPhase('pause'); }, 420);
       }
     }
-    if (phase === 'pause') { t.current = setTimeout(() => { setTxt(''); setPhase('a'); }, 500); }
+    if (phase === 'pause') { t.current = setTimeout(() => { setTxt(''); setPhase('a'); }, 520); }
     if (phase === 'a') {
       if (txt.length < cur.ans.length) {
-        t.current = setTimeout(() => setTxt(cur.ans.slice(0, txt.length + 1)), 19);
+        t.current = setTimeout(() => setTxt(cur.ans.slice(0, txt.length + 1)), 18);
       } else {
-        t.current = setTimeout(() => setPhase('wait'), 2500);
+        t.current = setTimeout(() => setPhase('wait'), 2600);
       }
     }
     if (phase === 'wait') {
@@ -50,7 +50,7 @@ export function MarketingTerminal() {
         setTxt(''); setLitAi(null);
         setQi(q => (q + 1) % QUERIES.length);
         setPhase('q');
-      }, 400);
+      }, 420);
     }
     return clr;
   }, [phase, txt, qi]);
@@ -76,11 +76,11 @@ export function MarketingTerminal() {
               <span className="t-stat on">responds...</span>
             </>
           ) : (
-            <span className="t-stat">asking all agents...</span>
+            <span className="t-stat">routing to all agents...</span>
           )}
         </div>
         <div className="t-out">
-          <span style={{ color: isAns ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.9)' }}>{txt}</span>
+          <span style={{ color: isAns ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.92)' }}>{txt}</span>
           <span className="t-cursor" />
         </div>
       </div>

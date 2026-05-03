@@ -4,10 +4,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 
 const NAV_ITEMS = [
-  { href: '#hero', label: 'Home', icon: <HomeIcon /> },
-  { href: '/trade', label: 'Trade', icon: <TradeIcon /> },
-  { href: '#feed', label: 'Feed', icon: <FeedIcon /> },
-  { href: '#agents', label: 'Agents', icon: <AgentsIcon /> },
+  { href: '#hero', sec: 'hero', label: 'Home', icon: <svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8v10a1 1 0 0 1-1 1h-5v-7h-6v7H4a1 1 0 0 1-1-1z"/></svg> },
+  { href: '/trade', sec: '', label: 'Trade', icon: <svg viewBox="0 0 24 24"><path d="M3 7h18l-1.5 11a2 2 0 0 1-2 1.7H6.5a2 2 0 0 1-2-1.7z"/><path d="M8 7V5a4 4 0 0 1 8 0v2"/></svg> },
+  { href: '#feed', sec: 'feed', label: 'Feed', icon: <svg viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/></svg> },
+  { href: '#agents', sec: 'agents', label: 'Agents', icon: <svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> },
 ];
 
 export function MarketingNav() {
@@ -16,7 +16,7 @@ export function MarketingNav() {
 
   useEffect(() => {
     const onScroll = () => {
-      setScrolled(window.scrollY > 18);
+      setScrolled(window.scrollY > 20);
       const ids = ['hero', 'agents', 'demo', 'feed'];
       const current = ids.findLast(id => {
         const el = document.getElementById(id);
@@ -40,38 +40,20 @@ export function MarketingNav() {
         <span className="nav-beta">BETA</span>
       </Link>
 
-      <div className="nav-pill" aria-label="Marketing navigation">
-        {NAV_ITEMS.map(item => {
-          const id = item.href.startsWith('#') ? item.href.slice(1) : '';
-          const isActive = id ? active === id || (id === 'hero' && active === 'demo') : false;
-          return (
-            <a key={item.label} href={item.href} className={isActive ? 'active' : undefined}>
-              {item.icon}
-              {item.label}
-            </a>
-          );
-        })}
-      </div>
-
       <div className="nav-links">
+        <div className="nav-pill" aria-label="Marketing navigation">
+          {NAV_ITEMS.map(item => {
+            const isActive = item.sec ? active === item.sec : false;
+            return (
+              <a key={item.label} href={item.href} className={isActive ? 'active' : undefined}>
+                {item.icon}
+                {item.label}
+              </a>
+            );
+          })}
+        </div>
         <Link href="/auth/signin" className="nav-cta">Sign in →</Link>
       </div>
     </nav>
   );
-}
-
-function HomeIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden><path d="M3 11.5 12 4l9 7.5" /><path d="M5.5 10.5V20h13v-9.5" /></svg>;
-}
-
-function TradeIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden><path d="M7 7h14l-2 8H8.5" /><path d="M7 7 6.3 4H3" /><circle cx="9" cy="20" r="1.5" /><circle cx="18" cy="20" r="1.5" /></svg>;
-}
-
-function FeedIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden><path d="M5 6h14" /><path d="M5 12h14" /><path d="M5 18h9" /></svg>;
-}
-
-function AgentsIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden><path d="M12 3v3" /><rect x="5" y="6" width="14" height="12" rx="4" /><path d="M9 12h.01" /><path d="M15 12h.01" /><path d="M9.5 16h5" /></svg>;
 }
