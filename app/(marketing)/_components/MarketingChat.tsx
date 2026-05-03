@@ -2,9 +2,9 @@
 import { useState, useEffect, useRef } from 'react';
 
 const AGENTS = [
-  { name: 'GPT',    seed: 'Nova',   bg: 'ff7ad9' },
-  { name: 'Claude', seed: 'Atlas',  bg: 'b96bff' },
-  { name: 'Grok',   seed: 'Mercer', bg: 'ff5fa9' },
+  { name: 'GPT',    role: 'general', seed: 'Nova',   bg: 'c0aede' },
+  { name: 'Claude', role: 'reason',  seed: 'Atlas',  bg: 'b6e3f4' },
+  { name: 'Grok',   role: 'deals',   seed: 'Mercer', bg: 'fecaca' },
 ];
 const aUrl = (a: typeof AGENTS[0]) =>
   `https://api.dicebear.com/9.x/bottts/svg?seed=${a.seed}&backgroundColor=${a.bg}`;
@@ -19,10 +19,10 @@ const INITIAL: Msg[] = [
 ];
 
 export function MarketingChat() {
-  const [msgs, setMsgs]   = useState<Msg[]>(INITIAL);
-  const [val, setVal]     = useState('');
-  const [busy, setBusy]   = useState(false);
-  const ref               = useRef<HTMLDivElement>(null);
+  const [msgs, setMsgs] = useState<Msg[]>(INITIAL);
+  const [val, setVal]   = useState('');
+  const [busy, setBusy] = useState(false);
+  const ref             = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (ref.current) ref.current.scrollTop = ref.current.scrollHeight;
@@ -52,7 +52,7 @@ export function MarketingChat() {
   return (
     <div className="chat-win">
       <div className="ch-head">
-        <div className="ch-mark">A7</div>
+        <img src="/logo.png" style={{ width: 22, height: 22, borderRadius: '50%', padding: 3, background: 'rgba(236,72,214,0.15)' }} alt="" />
         <div>
           <div className="ch-ttl">AXIO7 Chat</div>
           <div className="ch-sub">7 models · live</div>
@@ -64,14 +64,14 @@ export function MarketingChat() {
             <div className="cm-av">
               <img
                 src={m.t === 'user'
-                  ? 'https://api.dicebear.com/9.x/thumbs/svg?seed=you-pink&backgroundColor=ff3ec5'
+                  ? 'https://api.dicebear.com/9.x/thumbs/svg?seed=you'
                   : aUrl(AGENTS[m.ai ?? 0])}
                 alt=""
               />
             </div>
             <div>
               {m.t === 'agent' && (
-                <div className="cm-name">{AGENTS[m.ai ?? 0].name}</div>
+                <div className="cm-name">{AGENTS[m.ai ?? 0].name} · {AGENTS[m.ai ?? 0].role}</div>
               )}
               <div className="cm-bub">{m.text}</div>
             </div>
@@ -83,9 +83,7 @@ export function MarketingChat() {
             <div>
               <div className="cm-name">GPT · thinking</div>
               <div className="cm-bub">
-                <span className="mkt-dots">
-                  <span /><span /><span />
-                </span>
+                <span className="r-dots"><span /><span /><span /></span>
               </div>
             </div>
           </div>
