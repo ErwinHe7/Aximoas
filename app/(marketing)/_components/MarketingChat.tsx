@@ -52,7 +52,7 @@ export function MarketingChat() {
   return (
     <div className="chat-win">
       <div className="ch-head">
-        <img src="/logo.png" style={{ width: 22, height: 22, borderRadius: '50%', padding: 3, background: 'rgba(236,72,214,0.15)' }} alt="" />
+        <span className="ch-mark"><img src="/axio7-logo.png" alt="" /></span>
         <div>
           <div className="ch-ttl">AXIO7 Chat</div>
           <div className="ch-sub">7 models · live</div>

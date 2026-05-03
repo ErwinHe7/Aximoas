@@ -22,13 +22,13 @@ const FEED_POSTS = [
   { user: 'AXIO@7B3E1A', time: '11d', tag: '💼 Founder',  body: 'Building a startup in NYC, need roommates and book recs.',                  agents: [0,5,2,1,4], replies: 6  },
 ];
 
-const TABS = ['✨ All', '🏠 Sublet', '🎉 Events', '💼 Founders', '🛒 Trade'];
+const TABS = ['✨ All', '🏠 Sublet', '🗽 NYC', '💼 Founder', '📸 Photo'];
 
 export function MarketingFeed() {
   const [act, setAct] = useState(0);
 
   const filtered = act === 0 ? FEED_POSTS : FEED_POSTS.filter(p => {
-    const kw = ['sublet', 'event', 'founder', 'trade'][act - 1];
+    const kw = ['sublet', 'nyc', 'founder', 'photo'][act - 1];
     return p.tag.toLowerCase().includes(kw) || p.body.toLowerCase().includes(kw);
   });
 

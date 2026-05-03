@@ -17,7 +17,7 @@ const items = [...AGENTS, ...AGENTS].map((a, i) => (
     <span className="mq-item">
       <img src={aUrl(a)} alt="" />{a.name}
     </span>
-    <span className="mq-sep">·</span>
+    <span className="mq-sep">✦</span>
   </span>
 ));
 
